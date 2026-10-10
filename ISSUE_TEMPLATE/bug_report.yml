@@ -1,0 +1,73 @@
+name: Bug report
+description: Report a bug in a DSH plugin
+labels: [bug]
+body:
+  - type: input
+    id: plugin-name
+    attributes:
+      label: Plugin name
+      placeholder: "e.g. dsh-ds-balance, dsh-zhihu-search"
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: "Run `dsh plugin --profile <profile> list` or check package.json"
+      placeholder: "e.g. 2.3.1"
+    validations:
+      required: true
+
+  - type: input
+    id: dsh-version
+    attributes:
+      label: DSH version
+      description: "Run `dsh --version` or check the settings page"
+      placeholder: "e.g. 0.2.0-rc.2"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: Install method
+      options:
+        - npm (dsh plugin add)
+        - link: (local development)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Describe the actual behavior. Paste the full error message if any.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: other-plugins
+    attributes:
+      label: Other installed plugins (optional)
+      description: List any other DSH plugins installed in the same profile. Compatibility issues often come from conflicts.
+    validations:
+      required: false

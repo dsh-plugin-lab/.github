@@ -1,0 +1,25 @@
+name: Feature request
+description: Suggest a feature for a DSH plugin
+labels: [enhancement]
+body:
+  - type: input
+    id: plugin-name
+    attributes:
+      label: Plugin name
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve
+      description: Describe the scenario, not the solution
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: false
