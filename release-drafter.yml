@@ -1,0 +1,72 @@
+# Release Drafter config: appends entries to a draft Release, categorized by PR labels.
+#
+# It does NOT touch versions, create tags, or publish — the publish decision stays with a human.
+# Each repo has its own publish entry point (usually .github/workflows/release.yml, manual dispatch).
+# The two do not replace each other.
+#
+# Lives at the root of the org .github repo; inherited by all repos under the org
+# that do not have their own release-drafter.yml.
+
+name-template: 'v$RESOLVED_VERSION'
+# tag-template deliberately does NOT use v$RESOLVED_VERSION:
+# If a publish workflow uses `gh release view "$tag"` to check whether a version is already
+# released, a draft holding that tag makes the check hit the draft and take the "already exists,
+# skip" branch — the package gets published but the Release page is missing, and nothing errors.
+# A rolling name ("next") never collides with v<version>.
+tag-template: 'next'
+
+categories:
+  - title: 'Features'
+    labels:
+      - 'enhancement'
+  - title: 'Bug Fixes'
+    labels:
+      - 'bug'
+  - title: 'Compatibility'
+    labels:
+      - 'compat'
+  - title: 'Refactoring'
+    labels:
+      - 'refactor'
+  - title: 'Documentation'
+    labels:
+      - 'documentation'
+  # Catch-all: unlabeled PRs or labels not listed above land here.
+  - title: 'Other Changes'
+    labels:
+      - '*'
+exclude-labels:
+  - 'skip-changelog'
+change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
+change-title-escapes: '\<*_&'
+
+# Dependency bumps and other "merged but invisible to users" changes get skip-changelog.
+pre-exclude:
+  - title: 'skip-changelog'
+    labels:
+      - 'skip-changelog'
+
+# Direct pushes without a PR: the draft is allowed to be empty; no error, no block.
+autolabeler: []
+template: |
+  ## Changes
+
+  $CHANGES
+
+  **Auto-generated draft by Release Drafter — NOT published.** Actual publishing goes through each repo's publish entry point (usually a manual dispatch); the release body is finalized against that version's artifact consistency check.
+version-resolver:
+  major:
+    labels:
+      - 'breaking'
+  minor:
+    labels:
+      - 'enhancement'
+  patch:
+    labels:
+      - 'bug'
+      - 'compat'
+  default: patch
+# Versions are bumped explicitly per repo; the resolver result is only used for the draft title.
+update-major-version: false
+minor-version: true
+patch-version: true
