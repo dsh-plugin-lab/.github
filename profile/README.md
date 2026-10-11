@@ -1,17 +1,19 @@
 # dsh-plugin-lab
 
+[English](README.md) | [中文](README_zh.md)
+
 Plugins for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
 
 ## Plugins
 
-| Plugin | 用途 |
+| Plugin | Purpose |
 |---|---|
-| [dsh-ds-balance](https://github.com/dsh-plugin-lab/dsh-ds-balance) | 侧栏显示 DeepSeek 账户余额 |
-| [dsh-zhihu-search](https://github.com/dsh-plugin-lab/dsh-zhihu-search) | 知乎站内搜索 / 全网搜索 / 知乎直答 |
-| [dsh-workbuddy-bridge](https://github.com/dsh-plugin-lab/dsh-workbuddy-bridge) | 把 WorkBuddy 桌面 App 的模型接入 DSH |
+| [dsh-ds-balance](https://github.com/dsh-plugin-lab/dsh-ds-balance) | Show your DeepSeek account balance in the sidebar |
+| [dsh-zhihu-search](https://github.com/dsh-plugin-lab/dsh-zhihu-search) | Zhihu site search / web search / Zhihu Direct Answer |
+| [dsh-workbuddy-bridge](https://github.com/dsh-plugin-lab/dsh-workbuddy-bridge) | Bridge WorkBuddy desktop app models into DSH |
 
-## 安装
+## Installation
 
 ```shell
-dsh plugin --profile <profile> add <包名>
+dsh plugin --profile <profile> add <package-name>
 ```
