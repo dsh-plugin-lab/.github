@@ -2,7 +2,10 @@
 node_modules/
 
 # 构建产物（由构建命令生成，发布时随 files 字段打包）
-lib/
+# ⚠️ 必须锚定到仓根。裸 `lib/` 会匹配**任意深度**，于是把 `src/lib/` 一起忽略 ——
+# 而本模板给的目标结构里 `src/lib/` 是**源码**目录。症状是「本机全绿、CI 克隆下来缺文件」。
+# 实测命中过一次（见 .agents/notes/2026-10-13-gitignore-lib-must-be-anchored.md）。
+/lib/
 *.tsbuildinfo
 
 # 测试与覆盖率
