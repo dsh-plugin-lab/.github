@@ -73,13 +73,13 @@ Four things that cannot move:
   ci-success:
     name: CI Success
     runs-on: ubuntu-latest
-    needs: [<本文件全部 job id>]
+    needs: [<all job ids in this file>]
     if: always()
     steps:
       - name: Verify all jobs succeeded
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
         run: |
-          echo "::error::有 job 未成功 —— CI Success 判红"
+          echo "::error::some job did not succeed — CI Success goes red"
           echo '${{ toJSON(needs) }}'
           exit 1
 ```
@@ -131,7 +131,7 @@ jobs:
 ```
 
 - **The runner must be pinned to ubuntu**: on a windows runner the path separator stops the action from finding its config file, the draft comes out silently empty and **nothing errors** (the action's major version follows upstream).
-- The draft's tag name is decoupled from the version number: the draft takes a **fixed name** and does not take `v<版本>` — otherwise the "has this version been released?" check collides with the draft, takes the "already exists, skip" branch, and the package ships while the Release page stays empty, again **with no error**.
+- The draft's tag name is decoupled from the version number: the draft takes a **fixed name** and does not take `v<version>` — otherwise the "has this version been released?" check collides with the draft, takes the "already exists, skip" branch, and the package ships while the Release page stays empty, again **with no error**.
 - The draft summarises **pull requests**, not commits: a commit pushed straight to `main` is invisible to it. That is a trade-off, not a defect.
 
 ### 4. TypeScript and the test skeleton
@@ -164,7 +164,7 @@ Narrowing **temporarily** rewrites the manifest, and a repository usually has tw
 This kind of guard scans live documents and also scans `.github/workflows/*`; for a workflow it scans **comment lines only**. The reason: non-comment lines are **machine-consumed input** (matrix values, step names, `run` commands) and, like `package.json`, are themselves the source of truth, so they are explicitly exempt.
 
 - ✅ the family prefix in a matrix value or a `run`: `--only 0.2.0`
-- ❌ in a comment: `# --only 0.2.0 不能省` — judged as "copied a value that drifts"
+- ❌ in a comment: `# --only 0.2.0 is required` — judged as "copied a value that drifts"
 
 A comment should say **why** (why narrowing is required); the concrete value belongs to the machine-input line.
 
