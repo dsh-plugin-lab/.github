@@ -17,3 +17,8 @@
 ```shell
 dsh plugin --profile <profile> add <包名>
 ```
+
+## 约定
+
+哪些文件放组织级（本组织的仓自动继承）、各仓自持哪些形状、以及**明确不抽**的是哪些：
+[插件仓通用约定](https://github.com/dsh-plugin-lab/.github/blob/main/docs/plugin-conventions.md)。

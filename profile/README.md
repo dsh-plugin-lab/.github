@@ -17,3 +17,9 @@ Plugins for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
 ```shell
 dsh plugin --profile <profile> add <package-name>
 ```
+
+## Conventions
+
+Which files live at the organization level (resolved for every repository here),
+and the shapes each repository keeps for itself — including what is deliberately
+**not** shared: [plugin-conventions.md](https://github.com/dsh-plugin-lab/.github/blob/main/docs/plugin-conventions.md).
