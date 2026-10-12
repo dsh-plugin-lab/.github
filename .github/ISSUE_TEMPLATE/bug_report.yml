@@ -24,7 +24,7 @@ body:
     attributes:
       label: DSH version
       description: "Run `dsh --version` or check the settings page"
-      placeholder: "0.2.0-rc.2"
+      placeholder: "0.x.y-rc.z"
     validations:
       required: true
 
