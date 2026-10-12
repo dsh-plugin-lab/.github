@@ -17,6 +17,7 @@ organization that does not ship its own.
 | `.github/release-drafter.yml` | repositories without a config of their own |
 | `profile/README.md` | the organization profile page; not a fallback mechanism |
 | `docs/plugin-conventions.md` | maintainers: which files live here, which each repository keeps, and their shapes and criteria ([中文](docs/plugin-conventions_zh.md)) |
+| `assets/badges.md` | maintainers: copy-ready badge snippets — the official powered-by-dsh badge, the static/dynamic badge shapes, and the door-front skeleton |
 
 Nothing here is copied into those repositories: a repository that has a file of the
 same name always wins. The corollary matters more than the table — **a change here

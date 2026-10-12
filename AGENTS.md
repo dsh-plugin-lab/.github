@@ -49,6 +49,7 @@
 ## 文档地图
 
 - 跨仓判据（双语）→ [docs/plugin-conventions.md](docs/plugin-conventions.md) · [中文](docs/plugin-conventions_zh.md)
+- 徽章模板（存放，非活件）→ [assets/badges.md](assets/badges.md)：官方 powered-by-dsh 与自造徽章的拷贝即用片段、占位符形状、门面排骨架、链接写法规则
 - 决策与依据 → [.agents/notes/](.agents/notes/)（结构见其 [README.md](.agents/notes/README.md)）
 - 组织主页 → [profile/README.md](profile/README.md) · [中文](profile/README_zh.md)
 - 贡献规则 → [CONTRIBUTING.md](CONTRIBUTING.md)
