@@ -1,71 +1,73 @@
-# 插件仓通用约定
+# Plugin repository conventions
 
-**本文职责**：哪些东西放组织级、哪些各仓自持，以及各仓自持那些的**标准形状**与**逐条判据**。
-**读者**：新建插件仓的人（照抄形状）与维护者（核对）。
-**不负责**：某个仓自己的业务与设计 → 那个仓的 `AGENTS.md` 与 `docs/ARCHITECTURE.md`。
+[English](plugin-conventions.md) | [中文](plugin-conventions_zh.md)
 
-判断一个文件该放哪，按顺序问三个问题：
+**What this document is for**: which things belong at the organization level, which each repository keeps for itself, and — for the latter — the **standard shapes** and the **criteria, item by item**.
+**Readers**: whoever creates a new plugin repository (copy the shapes) and maintainers (to check against).
+**Not its job**: a repository's own business and design → that repository's `AGENTS.md` and `docs/ARCHITECTURE.md`.
 
-1. **机制支不支持回退？** 支持 → 放本仓（组织 `.github`），各仓代码零改动。
-2. **内容通用、但机制不支持？** → 各仓独立，形状写进本文。
-3. **内容仓特有？** → 各仓独立，本文不管。
+To decide where a file belongs, ask three questions in order:
+
+1. **Does the mechanism support a fallback?** If yes → keep it here (the organization `.github`), and no repository changes a line.
+2. **Is the content generic, but the mechanism has no fallback?** → independent per repository, with the shape recorded in this document.
+3. **Is the content specific to one repository?** → independent per repository; this document does not concern itself.
 
 ---
 
-## 一、能回退的：放本仓根目录或 `.github/`
+## 1. What can fall back: the repository root or `.github/`
 
-GitHub 只在平台支持的位置读这些文件，且**各仓有同名文件时用自己的**。放这里的收益是新增仓自动继承，且不产生任何提交、各仓 Git 内容不变。
+GitHub reads these files only from the locations the platform supports, and **a repository with a file of its own uses its own**. The gain from keeping them here is that a new repository inherits them automatically, with no commit and no change to any repository's Git content.
 
-| 文件 | 放哪 | 作用范围 |
+| File | Where | Applies to |
 |---|---|---|
-| `SECURITY.md` | 仓根 | 未自带该文件的仓 |
-| `CODE_OF_CONDUCT.md` | 仓根 | 同上 |
-| `SUPPORT.md` | 仓根 | 同上 |
-| `CONTRIBUTING.md` | 仓根 | 同上 |
-| `PULL_REQUEST_TEMPLATE.md` | 仓根 | 同上 |
-| `.github/ISSUE_TEMPLATE/*.yml` | **必须在 `.github/ISSUE_TEMPLATE/`** | 同上；某仓一旦自建该目录，本仓模板对它**整体失效** |
-| `profile/README.md` | `profile/` | 组织主页，不属回退机制 |
+| `SECURITY.md` | repository root | repositories that do not ship their own |
+| `CODE_OF_CONDUCT.md` | repository root | as above |
+| `SUPPORT.md` | repository root | as above |
+| `CONTRIBUTING.md` | repository root | as above |
+| `PULL_REQUEST_TEMPLATE.md` | repository root | as above |
+| `.github/ISSUE_TEMPLATE/*.yml` | **must be in `.github/ISSUE_TEMPLATE/`** | as above; once a repository creates that directory, these templates stop applying to it **altogether** |
+| `profile/README.md` | `profile/` | the organization profile page; not a fallback mechanism |
 
-三条机制上的坑（都实测过）：
+Three traps in the mechanism (all measured):
 
-- **issue 模板放仓根不生效。** 它的搜索路径与其他健康文件不同，只认 `.github/ISSUE_TEMPLATE/`。症状是「新建 issue 只有空白」——**不报错**。
-- **没有多语言机制。** `CONTRIBUTING_en.md` 这类名字不被识别，别指望靠它做双语回退；要双语只能写在同一份文件里。
-- **回退只在「本仓没有同名文件」时发生。** 各仓已有自己的 `CONTRIBUTING.md` 时，本仓的那份永远不会被显示 —— 它服务的是**将来新建的仓**。
+- **Issue templates at the repository root do nothing.** Their search path differs from the other health files: only `.github/ISSUE_TEMPLATE/` is recognized. The symptom is "a new issue offers nothing but a blank one" — **with no error**.
+- **There is no localization mechanism.** Names such as `CONTRIBUTING_en.md` are not recognized, so do not count on one for a bilingual fallback; bilingual means both languages in a single file.
+- **The fallback happens only when the repository has no file of that name.** When repositories already carry their own `CONTRIBUTING.md`, this one is never shown — it serves **repositories created later**.
 
-`SECURITY.md` 写的私密报告入口是各仓 **Security → Report a vulnerability**，它需要各仓单独开启「私密漏洞报告」（**私有仓不需要**：仓本身就是私有的）。
-
----
-
-## 二、通用但不抽的：形状写在这里
-
-**`workflow` 类明确不抽**：不做 `workflow_call`，各仓自带一份逐字相同的副本。
-
-理由：
-
-- 可调用 workflow 只有两种引用方式，各有代价：`@main` 让本仓一改、所有仓同时变（且在各仓的 diff 与历史里**看不见**）；`@v1` 要额外维护 tag 与「破坏性变更是否升版」的政策。
-- 省下的是一份**很少改动**的重复文本，换来的是「一改多炸」的故障半径与一层跨仓排障。
-- **重开条件**：插件仓数量达到 6 个以上，或某个 workflow 开始出现真实的分支逻辑与多仓参数。
-
-副本之间靠**逐字相同**约束，不靠模板生成；两个副本不一致时以本文的形状为准。
-
-**载体状态**：不建共享包、不抽副本。知识类靠指针（宿主官方真源），断言类走各仓各写、接受双向同步。
+The private-reporting entry that `SECURITY.md` describes is each repository's **Security → Report a vulnerability**, which has to be enabled per repository (**private repositories do not need it**: the repository is private already).
 
 ---
 
-## 三、各仓自持各件的标准形状
+## 2. Generic but not extracted: the shapes live here
 
-以下只写形状，不含会漂的值（版本号、计数、线名）。新建仓照形状写，老仓据此核对。
+**`workflow` files are explicitly not extracted**: no `workflow_call`; each repository carries a byte-identical copy.
 
-### 1. CI 的收口 job
+Why:
 
-各仓 `ci.yml` 的最后一个 job：让 ruleset 只盯一个状态检查名，内部 job 增删时规则集不用动。
+- A callable workflow can only be referenced in two ways, each with a cost: `@main` means one edit here changes every repository at once (and is **invisible** in their diffs and history); `@v1` means maintaining tags on top of a policy for whether a breaking change bumps the major version.
+- What is saved is a duplicate text that **rarely changes**; what is paid is a failure radius of "one edit, many breakages" plus an extra hop when something breaks across repositories.
+- **Reopening condition**: six or more plugin repositories, or a workflow that develops real branching logic and per-repository parameters.
 
-四条不能动：
+Copies are held together by being **byte-identical**, not by generation from a template; when two copies disagree, the shapes in this document win.
 
-- **判定只放 step 级** —— 放 job 级时条件为假会让 job 变 `skipped`，而 GitHub 把 `skipped` 当成功，那正好是要防的假绿。
-- **`needs` 必须列全本文件的 job id** —— 漏一个，那个 job 红了也照样放行。
-- **`if: always()`** —— 否则上游失败会把收口 job 自身也跳过。
-- **`skipped` 与 `failure`、`cancelled` 一并判红**。
+**Carrier status**: no shared package, no extracted copies. Knowledge travels as pointers (the host's official sources); assertions are written per repository, accepting two-way sync.
+
+---
+
+## 3. Standard shapes for what each repository keeps
+
+Only shapes below — no values that drift (version numbers, counts, line names). A new repository copies the shapes; an existing one is checked against them.
+
+### 1. The CI closing job
+
+The last job in each repository's `ci.yml`: it lets the ruleset watch a single status-check name, so adding or removing inner jobs needs no change to the ruleset.
+
+Four things that cannot move:
+
+- **Judge at step level only** — at job level a false condition turns the job `skipped`, and GitHub treats `skipped` as success, which is exactly the false green this guards against.
+- **`needs` must list every job id in the file** — miss one, and that job can go red while this one still passes.
+- **`if: always()`** — without it, an upstream failure skips the closing job itself.
+- **`skipped` goes red alongside `failure` and `cancelled`**.
 
 ```yaml
   ci-success:
@@ -82,11 +84,11 @@ GitHub 只在平台支持的位置读这些文件，且**各仓有同名文件�
           exit 1
 ```
 
-ruleset 的 `required_status_checks` 只配 `CI Success` 这一个名字。
+The ruleset's `required_status_checks` names `CI Success` and nothing else.
 
-### 2. 依赖漂移巡检
+### 2. Dependency drift patrol
 
-只开 `github-actions` 生态：本族的 npm 依赖大半在宿主的预发布线上，放开自动 PR 只会变成噪音，需要时手工升。
+Only the `github-actions` ecosystem: most npm dependencies in this family sit on the host's pre-release line, so enabling automatic pull requests would only produce noise — upgrade them by hand when needed.
 
 ```yaml
 version: 2
@@ -103,10 +105,10 @@ updates:
         patterns: ['*']
 ```
 
-### 3. 草稿 Release
+### 3. Draft releases
 
-**配置**放组织级（本仓的 `.github/release-drafter.yml`，各仓没有自己的配置时会回退到它）。
-**workflow** 各仓一份，逐字相同：
+The **config** lives at the organization level (this repository's `.github/release-drafter.yml`; a repository with no config of its own falls back to it).
+The **workflow** is one per repository, byte-identical:
 
 ```yaml
 name: release-drafter
@@ -128,112 +130,109 @@ jobs:
       - uses: release-drafter/release-drafter@v7
 ```
 
-- **runner 必须固定 ubuntu**：windows runner 上路径分隔符会让 action 读不到配置文件，草稿静默为空、**不报错**（action 主版本随官方走）。
-- 草稿的 tag 名与版本号解耦：草稿占用一个**固定名**，不占用 `v<版本>` —— 否则「这个版本是否已发布」的检查会撞上草稿，走进「已存在、跳过」的分支，包发出去了、Release 页却没有，且**不报错**。
-- 草稿汇总的是 **PR**，不是 commit：直推 `main` 的提交对它不可见。这是取舍，不是缺陷。
+- **The runner must be pinned to ubuntu**: on a windows runner the path separator stops the action from finding its config file, the draft comes out silently empty and **nothing errors** (the action's major version follows upstream).
+- The draft's tag name is decoupled from the version number: the draft takes a **fixed name** and does not take `v<版本>` — otherwise the "has this version been released?" check collides with the draft, takes the "already exists, skip" branch, and the package ships while the Release page stays empty, again **with no error**.
+- The draft summarises **pull requests**, not commits: a commit pushed straight to `main` is invisible to it. That is a trade-off, not a defect.
 
-### 4. TypeScript 与测试骨架
+### 4. TypeScript and the test skeleton
 
-- 宿主半边与浏览器半边各一份 tsconfig；日常与契约**两套** vitest 配置分开。
-- 日常配置**显式排除**契约用例；契约配置单跑（不并行、超时放宽）。
-- `strict` 必须开。编译器开关负责类型与死代码，ESLint 负责编译器覆盖不到的那一档（格式、hooks、promise、import）——**分工口径跨仓一致，工具参数各仓自定**（分号、引号本就不同）。
-- **本地钩子只跑秒级检查**（格式化与 lint 的自动修复），typecheck 与测试留给 CI：钩子一慢，就会有人用 `--no-verify` 绕过，等于没有钩子。
-- CI 安装一律走 frozen 模式，不联网解析新版本。
-- **每个可维护目录一对双件**：`AGENTS.md` 写「在这里要怎么干」，`README.md` 写「这里有什么、改哪」；同一事实只有一个 home，跨件只给指针。
+- One tsconfig for the host half and one for the browser half; **two** vitest configs kept apart, one day-to-day and one for contracts.
+- The day-to-day config **explicitly excludes** the contract cases; the contract config runs on its own (no parallelism, relaxed timeout).
+- `strict` is mandatory. Compiler switches own types and dead code; ESLint owns the layer the compiler does not cover (formatting, hooks, promises, imports) — **the division of labour is the same across repositories, the tool parameters are not** (semicolons and quotes already differ).
+- **Local hooks run second-scale checks only** (formatting and lint autofixes); typecheck and tests belong to CI. A slow hook gets bypassed with `--no-verify`, which amounts to having no hook.
+- CI installs always run in frozen mode, never resolving new versions over the network.
+- **One pair of files per maintainable directory**: `AGENTS.md` says how to work here, `README.md` says what is here and what to change; a fact has exactly one home, and cross-file mentions are pointers only.
 
-### 5. 发布态守卫与兼容巡检
+### 5. Release-state guards and the compatibility patrol
 
-- **发布态不变量**落成 `check:release` 脚本，发布流程在 publish **之前**跑它。
-- **兼容巡检**对着**上游**动没动，本地提交改不了结论，所以按周跑、**不挂 `push`**。
-- 换包脚本清残留时**两种锁文件都要清**（`package-lock.json` 与 `pnpm-lock.yaml`）：留着旧锁会让安装直接失败，而**安装失败之后依赖树停在旧版本上、后面每一步都绿**。
-- 声明面是**若干族的并集**（`||` 分隔）时，测**任何一族**都必须把声明临时收窄到那一族 ——
-  **不只是低族**。并集下安装器不一定选最高的那族：`latest` 指向的版本若能满足区间，它就用
-  `latest`（npm 与 pnpm 行为一致，`semver.maxSatisfying` 并不适用），不收窄会装出**混合树**，
-  于是「换到某条线」这一步跑的根本不是那条线。首例与完整证据见 `dsh-workbuddy-bridge` 的
-  `.agents/notes/2026-10-12-installer-picks-latest-family.md`。
-- 巡检红了的**可见性**：定时任务的失败邮件只发给最后改过 cron 的人，不能当主通知 —— 失败要开或更新一条**固定标题**的跟踪 issue（同一处失败不重复刷评论）。
+- **Release-state invariants** become a `check:release` script, run by the release flow **before** publish.
+- **The compatibility patrol** watches whether **upstream** moved; a local commit cannot change its verdict, so it runs weekly and **is not attached to `push`**.
+- A swap script clearing leftovers must clear **both lockfiles** (`package-lock.json` and `pnpm-lock.yaml`): a stale lock makes the install fail outright, and **after a failed install the tree stays on the old versions while every later step goes green**.
+- When the declaration is a **union of families** (separated by `||`), testing **any** family requires narrowing the declaration to that family first —
+  **not only the lower one**. Under a union the installer does not necessarily pick the highest family: if the version `latest` points at satisfies the range, that is the one it uses
+  (`latest`; npm and pnpm behave the same, and `semver.maxSatisfying` does not apply), so without narrowing the install produces a **mixed tree**,
+  and the "move to some line" step ends up testing a line that is not the one named. The first instance, with the full evidence, is in `dsh-workbuddy-bridge`'s
+  `.agents/notes/2026-10-12-installer-picks-latest-family.md`.
+- **Visibility when the patrol goes red**: a scheduled run's failure mail goes only to whoever last edited the cron, so it cannot be the main notification — a failure must open or update a tracking issue with a **fixed title** (the same failure does not get a fresh comment every time).
 
-#### 收窄期间会撞上两条红线，各自的解法不同
+#### Narrowing collides with two redlines, and each has its own fix
 
-收窄是**临时**改写清单，而仓库里通常有两条红线会读 `package.json`。它们在收窄期间读到的是
-收窄后的形态，于是与红线冲突。两条都有解，但解法不是同一个。
+Narrowing **temporarily** rewrites the manifest, and a repository usually has two redlines that read `package.json`. During the narrowing they see the narrowed form, so they collide with it. Both have a fix, and the fixes are not the same.
 
-**（一）「不抄会漂的宿主版本」红线 —— 值放机器输入行，注释里不点值。**
+**(one) The "do not copy host versions that drift" redline — put the value on a machine-input line, never in a comment.**
 
-这类守卫扫活文档，并附带扫 `.github/workflows/*`；对 workflow 它**只扫注释行**。理由是
-非注释行属于**机器消费的输入**（矩阵值、步骤名、`run` 命令），与 `package.json` 同属真源，明确豁免。
+This kind of guard scans live documents and also scans `.github/workflows/*`; for a workflow it scans **comment lines only**. The reason: non-comment lines are **machine-consumed input** (matrix values, step names, `run` commands) and, like `package.json`, are themselves the source of truth, so they are explicitly exempt.
 
-- ✅ 族前缀写在矩阵值或 `run` 里：`--only 0.2.0`
-- ❌ 写进注释：`# --only 0.2.0 不能省` —— 会被判成"抄了会漂的值"
+- ✅ the family prefix in a matrix value or a `run`: `--only 0.2.0`
+- ❌ in a comment: `# --only 0.2.0 不能省` — judged as "copied a value that drifts"
 
-注释该说的是**为什么**（为什么必须收窄），具体值交给机器输入行。
+A comment should say **why** (why narrowing is required); the concrete value belongs to the machine-input line.
 
-**（二）「文档里的宿主下限」红线 —— 跑测试前把清单还原。**
+**(two) The "host floor in the live documents" redline — restore the manifest before running tests.**
 
-有的守卫拿 `package.json` 的下限去活文档里找「宿主 + 下限值」，并且**硬断言至少命中一条**
-（自检：命中为零说明这条提示已经空转）。收窄之后下限换到了另一族，文档里写的仍是原下限，
-自检因此落空 —— **这是判据错位，不是代码有问题**。
+Some guards take the floor from `package.json`, look for "host + floor value" in the live documents, and **assert that at least one hit exists**
+(self-check: zero hits means the hint has gone vacuous). After narrowing the floor has moved to another family while the documents still name the original one,
+so the self-check fails — **this is a criterion mismatch, not broken code**.
 
-解法是让收窄的职责回到它该有的范围：
+The fix is to put narrowing back inside the job it actually has:
 
-1. 收窄只为**装**与**核对装了哪族**两件事，两件都在换包那一步内完成；
-2. 跑 typecheck / build / test **之前**，把清单还原成提交时的样子（`git checkout -- package.json`）；
-3. 依赖树**不动** —— 还原的是清单，目标族的效果仍然生效。
+1. Narrowing serves **installing** and **confirming which family got installed**, both of which finish inside the swap step;
+2. **Before** typecheck / build / test, restore the manifest to its committed state (`git checkout -- package.json`);
+3. The dependency tree is **untouched** — the manifest is what gets restored, and the target family still takes effect.
 
-还原之后，测试跑在「**目标族的依赖树 + 仓库声明的清单**」上：依赖树是被验的对象，清单是判据的输入，
-各归其位。红线判的是**仓库的声明**，不是巡检里临时的收窄形态。
+After the restore, the tests run on "**the target family's dependency tree + the repository's declared manifest**": the tree is what is under test, the manifest is the criterion's input, and each is where it belongs. A redline judges **the repository's declaration**, not the temporary narrowed form of a patrol run.
 
-> 哪条腿先暴露问题（二）取决于文档恰好写了哪一族：文档写下限那一族的腿不会暴露它。
-> 所以它不是"某条腿特有的毛病"，两条腿都必须还原。
+> Which leg exposes problem (two) first depends on which family the documents happen to name: the leg whose documents name the floor family will not expose it.
+> So it is not "a defect specific to one leg" — every leg must restore.
 
 ---
 
-## 四、逐条判据（跨仓一致性）
+## 4. Criteria, item by item (cross-repository consistency)
 
-三档的含义：
+The three tiers:
 
-| 档 | 含义 |
+| Tier | Meaning |
 |---|---|
-| **必须一致** | 不一致就是缺陷，要落成校验 |
-| **最好一致** | 判定逻辑共享，参数各仓定 |
-| **能力可选** | 规则本身不适用，**不是被关掉** |
+| **Must agree** | a disagreement is a defect and has to become a check |
+| **Should agree** | the decision logic is shared, the parameters are per repository |
+| **Capability optional** | the rule genuinely does not apply — **not** that it was switched off |
 
-| 规则 | 档 | 落点 |
+| Rule | Tier | Where it lands |
 |---|---|---|
-| 锁文件的 `resolved` 必须指向官方源 | 必须一致 | 各仓红线断言（条数现算，不抄进文档） |
-| peer 缺失 → 失败；仅 dev 缺失 → 告警跳过 | 最好一致 | 判定逻辑共享（**默认 fail**），跟哪条宿主线各仓定 |
-| peer 与 dev 的版本必须一致 | 必须一致 | 各仓红线断言 |
-| 四个编译器开关与 ESLint 各自分工 | 最好一致 | 各仓红线守着开关存在；**开关值留 `tsconfig.json`**，工具参数各仓自定 |
-| 发布态不变量 | 必须一致 | 各仓 `check:release`；纯宿主插件可豁免 `files` 那条，**宿主兼容范围必须有** |
-| 发布流程**不得** bump 版本 | 必须一致 | 各仓红线断言，**带反向控制**。bump 是发布前的独立一步 |
-| 发布前确认**远端**已有要发的提交 | 必须一致 | 各仓 `docs/PUBLISHING.md` 的「发版前确认」 |
-| 发布必须产出**同形**的 git 侧产物（tag 形状、Release 存在、预发布要标出） | 必须一致 | 各仓发布流程断言。tag 名是**机器**在读（守卫靠 `git describe --match`），不是纯审美 |
-| 宿主兼容范围与 peer 区间必须**自洽** | 必须一致 | 各仓红线。跨仓只比**下限**（可比），**上界形状各仓自定** |
-| 依赖类别的判据是「**我们与它的关系**」：只 `import type` → `devDependencies`；**消费它提供的服务** → `peerDependencies` | 必须一致 | 各仓 `AGENTS.md`。判据与现状对不上时，下一个人会照规则把它删掉 |
-| TypeScript 严格开关的档位（`strict` / 索引访问 / 可选属性） | 最好一致 | **流程**共享：开任一开关前用**真实配置**量位点数（不是 CLI 覆盖），两个开关同开必须单独测一次；**参数各仓自定**，不维护跨仓快照 |
-| 「只记录不阻断」的巡检项 | 必须一致 | 必须附理由，否则绿会掩盖真问题 |
-| 诊断类步骤（例如发布时 dump 凭据声明） | — | 属物化类：**留本地 workflow**，不抽 |
-| 路径冲突断言 | — | **不写**：已有等价保护，再写一份是重复 |
-| CSS 注入方式、有没有样式文件 | 能力可选 | 留各仓：规则本身不适用 |
-| 客户端 `inject` 只列真实依赖 | 必须一致 | 用官方自带校验器，不另写散文 |
+| The lockfile's `resolved` must point at the official registry | Must agree | a redline assertion per repository (the count is computed, never copied into a document) |
+| A missing peer → fail; missing dev only → warn and skip | Should agree | shared decision logic (**default fail**); which host line it follows is per repository |
+| peer and dev versions must agree | Must agree | a redline assertion per repository |
+| The four compiler switches and ESLint each own their layer | Should agree | redlines per repository guard that the switches exist; **the switch values stay in `tsconfig.json`**, tool parameters are per repository |
+| Release-state invariants | Must agree | `check:release` per repository; a pure host plugin may be exempt from the `files` item, **the host compatibility range must not be** |
+| The release flow must **not** bump the version | Must agree | a redline assertion per repository, **with a negative control**. Bumping is its own step before a release |
+| Before releasing, confirm the commit to release is already on the **remote** | Must agree | the "before you release" section of each repository's `docs/PUBLISHING.md` |
+| A release must produce git-side artifacts of the **same shape** (tag shape, Release exists, pre-release marked) | Must agree | an assertion in each repository's release flow. The tag name is read by **a machine** (the guard uses `git describe --match`), so it is not pure aesthetics |
+| The host compatibility range and the peer range must be **self-consistent** | Must agree | redlines per repository. Across repositories only the **floor** is compared (it is comparable); **the upper bound's shape is per repository** |
+| The criterion for a dependency's category is "**our relationship to it**": `import type` only → `devDependencies`; **consuming a service it provides** → `peerDependencies` | Must agree | each repository's `AGENTS.md`. When the criterion and the current state disagree, the next person deletes it by the rule |
+| The tier of TypeScript's strict switches (`strict` / indexed access / optional properties) | Should agree | the **process** is shared: before enabling any switch, count the sites with the **real config** (not a CLI override), and enabling two at once must be tested separately; **the parameters are per repository**, with no cross-repository snapshot |
+| Patrol items that "record but do not block" | Must agree | they must carry a reason, or a green run hides a real problem |
+| Diagnostic steps (for example dumping the credential declaration at release time) | — | they are materialisation: **local to the workflow**, not extracted |
+| Path-conflict assertions | — | **not written**: equivalent protection already exists, and a second copy is duplication |
+| How CSS is injected, whether a stylesheet exists | Capability optional | per repository: the rule itself does not apply |
+| A client `inject` lists real dependencies only | Must agree | use the official bundled validator rather than writing prose |
 
-**两类内容分开治理**：
+**Two kinds of content, governed apart**:
 
-- **断言**（错了 = CI 当场红，**响**）—— 先上。
-- **知识**（错了 = 有人读了过期指南，**安静**）—— 同批做，但不算红线。
+- **Assertions** (wrong = CI goes red on the spot, **loud**) — first.
+- **Knowledge** (wrong = someone reads a stale guide, **quiet**) — the same batch, but not a redline.
 
-**一条兜底判据**：某个仓撞上上游**类型面**过不去时，**有权停在能构建的那条线上** ——
-能构建优先于跟线。这条与上面各条不冲突：上面说的是「声明要与被推荐的线自洽」，
-这里说的是「自洽的对象可以是更靠下的那条线」。各仓停在线上不必强行对齐。
+**One fallback criterion**: when a repository cannot get past upstream's **type surface**, it **may stop on the line that still builds** —
+building beats following the line. This does not conflict with the criteria above: those say the declaration must be self-consistent with the line being recommended,
+while this says the self-consistent target may be the lower line. Repositories stopping on different lines need not be forced into alignment.
 
-**为什么这些判据写在这里、不写在某个仓里**：它们跨仓成立，住在某一个仓里时另一个仓的人读不到 ——
-**规则没有执行体就会烂掉**。规则本身落成各仓的断言，本文只登记「哪一条属于哪个档、落在哪」。
+**Why these criteria live here and not in one of the repositories**: they hold across repositories, and living in one repository means the next repository's people never read them —
+**a rule with no executor rots**. The rules themselves land as per-repository assertions; this document only registers which one belongs to which tier and where it lands.
 
 ---
 
-## 五、怎么核对
+## 5. How to check
 
-- **逐字相同的副本** → 比字节，不比语义。
-- **形状** → 照本文的判据看，不照本文抄值。
-- **规则不能只写在散文里** → 能落成断言的就落成断言（红线测试、`check:*` 脚本），散文只留指针。
-- **对比型描述（「A 有、B 没有」）最易陈腐** → 它同时依赖两边状态，动手前回原始来源现查一次。
+- **Byte-identical copies** → compare bytes, not meaning.
+- **Shapes** → read the criteria here; do not copy values from here.
+- **A rule cannot live only in prose** → whatever can become an assertion becomes one (redline tests, `check:*` scripts); prose keeps pointers only.
+- **Contrastive descriptions ("A has it, B does not") go stale fastest** → they depend on both sides at once; before acting, re-check the original source.
