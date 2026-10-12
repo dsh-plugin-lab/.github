@@ -6,7 +6,7 @@ body:
     id: plugin-name
     attributes:
       label: Plugin name
-      placeholder: "e.g. dsh-ds-balance, dsh-zhihu-search"
+      placeholder: "dsh-<plugin-name>"
     validations:
       required: true
 
@@ -15,7 +15,7 @@ body:
     attributes:
       label: Plugin version
       description: "Run `dsh plugin --profile <profile> list` or check package.json"
-      placeholder: "e.g. 2.3.1"
+      placeholder: "2.3.1"
     validations:
       required: true
 
@@ -24,7 +24,7 @@ body:
     attributes:
       label: DSH version
       description: "Run `dsh --version` or check the settings page"
-      placeholder: "e.g. 0.2.0-rc.2"
+      placeholder: "0.2.0-rc.2"
     validations:
       required: true
 
@@ -34,7 +34,7 @@ body:
       label: Install method
       options:
         - npm (dsh plugin add)
-        - link: (local development)
+        - 'link: (local development)'
         - Other
     validations:
       required: true
