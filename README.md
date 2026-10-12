@@ -18,6 +18,7 @@ organization that does not ship its own.
 | `profile/README.md` | the organization profile page; not a fallback mechanism |
 | `docs/plugin-conventions.md` | maintainers: which files live here, which each repository keeps, and their shapes and criteria ([中文](docs/plugin-conventions_zh.md)) |
 | `assets/badges.md` | maintainers: copy-ready badge snippets — the official powered-by-dsh badge, the static/dynamic badge shapes, and the door-front skeleton |
+| `templates/plugin/` | maintainers: the skeleton for a **new** plugin repository, laid down by `scripts/scaffold.mjs`; it is a **seeder, not a synchroniser** — nothing here is ever written back into an existing repository |
 
 Nothing here is copied into those repositories: a repository that has a file of the
 same name always wins. The corollary matters more than the table — **a change here
@@ -29,7 +30,8 @@ changes what those repositories show, with no commit in any of them**.
   is published from here. There is also no license, because nothing is distributed
   from here — the plugins carry their own.
 - **No build, no dependencies, no CI.** The checks are a link check and a line-ending
-  check, run by hand; the commands are in [AGENTS.md](AGENTS.md).
+  check, run by hand; the commands are in [AGENTS.md](AGENTS.md). `scripts/scaffold.mjs`
+  adds no dependency: it is plain Node with `node:` built-ins only.
 - **No repository-specific content.** What one plugin does, how it builds, and what it
   deliberately will not do stay in that plugin's own repository.
 

@@ -24,7 +24,13 @@
 
 - 链接校验：`python <maintenance-flow>/check-markdown-links.py <本仓> --fragments --refs`
 - 换行校验：`git diff --check`
-- 本仓**无 CI、无构建、无依赖安装**：改完跑上面两条，再去 GitHub 上看渲染。
+- 铺新仓骨架：`node scripts/scaffold.mjs <空目录> [--profile npm-tsc|pnpm-tsdown] [--host-only]`
+  （先 `--dry-run` 看清单；目标非空会被拒绝，这是有意的 —— 它只给空目录用）
+- 核对逐字相同件：`node scripts/scaffold.mjs check <仓目录>...` —— 模板那一份与仓内同名文件
+  做 SHA-256 比对。**不一致不必然是缺陷**（分号、锁文件名本来就是逐仓参数），
+  它报的是「知道它不同」，不是「强行一样」
+- 本仓**无 CI、无构建、无依赖安装**：改完跑上面几条，再去 GitHub 上看渲染。
+  `scaffold.mjs` 只用 `node:` 内建模块，不破这条
 
 ## 验证快照
 
@@ -50,6 +56,7 @@
 
 - 跨仓判据（双语）→ [docs/plugin-conventions.md](docs/plugin-conventions.md) · [中文](docs/plugin-conventions_zh.md)
 - 徽章模板（存放，非活件）→ [assets/badges.md](assets/badges.md)：官方 powered-by-dsh 与自造徽章的拷贝即用片段、占位符形状、门面排骨架、链接写法规则
+- 新仓骨架（播种器，**不回写任何已存在的仓**）→ [templates/plugin/](templates/plugin/) + [scripts/scaffold.mjs](scripts/scaffold.mjs)
 - 决策与依据 → [.agents/notes/](.agents/notes/)（结构见其 [README.md](.agents/notes/README.md)）
 - 组织主页 → [profile/README.md](profile/README.md) · [中文](profile/README_zh.md)
 - 贡献规则 → [CONTRIBUTING.md](CONTRIBUTING.md)

@@ -48,6 +48,11 @@ Four criteria that follow from the mechanism:
 - **Reopening condition**: six or more plugin repositories, or a workflow that grows real branching logic and per-repository parameters.
 - Reasoning and the rejected alternatives → [decision: workflow copies are not extracted](../.agents/notes/2026-10-12-workflow-copies-not-extracted.md).
 
+**A scaffold seeds; it does not synchronise**: `scripts/scaffold.mjs` + `templates/plugin/` lay down a
+new repository's skeleton **once** and never write back into an existing repository — so copies stay
+held together by byte-identity exactly as above. Its `check` subcommand is the **execution body this
+criterion has so far lacked**. Reasoning → [decision: the scaffold seeds, it does not sync](../.agents/notes/2026-10-12-scaffold-seeds-not-syncs.md).
+
 **Carrier status**: no shared package and no extracted copies. Knowledge travels as pointers (the host's official sources); assertions are written per repository, accepting two-way sync.
 
 ---
@@ -197,7 +202,10 @@ while this says the self-consistent target may be the lower line. Repositories s
 
 ## 5. How to check
 
-- **Byte-identical copies** → compare bytes, not meaning.
+- **Byte-identical copies** → compare bytes, not meaning. Execution body:
+  `node scripts/scaffold.mjs check <repo>...` (SHA-256 of the template copy against each repository's
+  same-named file). A mismatch is **not necessarily a defect** — it reports "know that it differs",
+  not "force it to match".
 - **Shapes** → read the criteria here; do not copy values from here.
 - **A rule cannot live only in prose** → whatever can become an assertion becomes one (redline tests, `check:*` scripts); prose keeps pointers only.
 - **Contrastive descriptions ("A has it, B does not") go stale fastest** → they depend on both sides at once; before acting, re-check the original source.

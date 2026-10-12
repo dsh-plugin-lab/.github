@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    // 浏览器半体内部以 `.ts` / `.tsx` 后缀互相导入（vitest 与打包器都认这种写法）。
+    // 注意它只在 `emitDeclarationOnly` / `noEmit` 下合法 —— 这个 project 正是前者。
+    "allowImportingTsExtensions": true,
+    "types": [],
+    "outDir": "./lib/types",
+    "rootDir": "./src",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": false,
+    "sourceMap": false
+  },
+  "include": ["src/client/**/*"],
+  "exclude": []
+}
