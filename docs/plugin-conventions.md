@@ -180,6 +180,7 @@ The three tiers:
 | Path-conflict assertions | — | **not written**: equivalent protection already exists, and a second copy is duplication |
 | How CSS is injected, whether a stylesheet exists | Capability optional | per repository: the rule itself does not apply |
 | A client `inject` lists real dependencies only | Must agree | use the official bundled validator rather than writing prose |
+| How links are written: **same repository → relative path**; **another repository (same organization or not) → absolute URL**; always `[]()`, never `<URL>` and never a bare URL. A URL that is a **value** rather than a reference goes in inline code | Must agree | each repository's `AGENTS.md`; files rendered on the organization profile page are the exception (their links must be absolute — see that repository's `AGENTS.md`) |
 
 **Two kinds of content, governed apart**:
 
