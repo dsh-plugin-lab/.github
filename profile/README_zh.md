@@ -19,7 +19,11 @@
 dsh plugin --profile <profile> add <包名>
 ```
 
-## 约定
+## [dsh-plugin-lab/.github](https://github.com/dsh-plugin-lab/.github) 里有什么
 
-哪些文件放组织级（本组织的仓自动继承）、各仓自持哪些形状、以及**明确不抽**的是哪些：
-[插件仓通用约定](https://github.com/dsh-plugin-lab/.github/blob/main/docs/plugin-conventions.md)。
+| 文件 | |
+|---|---|
+| [plugin-conventions.md](https://github.com/dsh-plugin-lab/.github/blob/main/docs/plugin-conventions.md) | 哪些文件放组织级、各仓自持哪些形状、共享哪些不变量 |
+| [CONTRIBUTING.md](https://github.com/dsh-plugin-lab/.github/blob/main/CONTRIBUTING.md) | 怎么贡献 |
+| [SECURITY.md](https://github.com/dsh-plugin-lab/.github/blob/main/SECURITY.md) | 怎么私密报告漏洞 |
+| [templates/plugin](https://github.com/dsh-plugin-lab/.github/tree/main/templates/plugin) | 脚手架：给新插件仓铺骨架 |
