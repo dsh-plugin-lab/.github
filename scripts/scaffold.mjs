@@ -26,7 +26,11 @@
  *   --host-only                      Skip the browser half (no src/client, no client build)
  *   --dry-run                        Print what would be written, write nothing
  *   --force                          Write even when the target directory is not empty
- *   --install                        Run a frozen install afterwards, producing the lockfile
+ *   --install                        Install afterwards, producing the lockfile (unfrozen: a fresh
+ *                                    directory has no lockfile for a frozen install to check)
+ *   --verify                         --install, then run the checks the generated repository's own CI
+ *                                    runs. Needs the network; this is the acceptance test for a
+ *                                    template edit.
  *   --help
  *
  * Exit codes: 0 = success / 1 = usage error or failed validation / 2 = precondition unmet.
@@ -49,7 +53,10 @@ const TEMPLATES = path.join(HERE, '..', 'templates', 'plugin')
 const PROFILES = {
   'npm-tsc': {
     pm: 'npm',
-    install: 'npm ci',
+    // Two installs, deliberately: CI installs frozen (the lockfile is committed by then), while a
+    // freshly seeded directory has no lockfile yet and must install unfrozen to produce one.
+    installFrozen: 'npm ci',
+    installFresh: 'npm install --no-audit --no-fund',
     run: 'npm run',
     pmSetup: '',
     builderDeps: ',\n    "esbuild": "^0.28.2"',
@@ -60,7 +67,8 @@ const PROFILES = {
   },
   'pnpm-tsdown': {
     pm: 'pnpm',
-    install: 'pnpm install --frozen-lockfile --config.node-linker=hoisted',
+    installFrozen: 'pnpm install --frozen-lockfile --config.node-linker=hoisted',
+    installFresh: 'pnpm install --config.node-linker=hoisted',
     run: 'pnpm run',
     pmSetup:
       '      # pnpm has to be installed before setup-node, or `cache: pnpm` cannot find the store.\n' +
@@ -75,6 +83,16 @@ const PROFILES = {
     typecheckHostOnly: 'tsc -p tsconfig.json',
   },
 }
+
+/**
+ * What `--verify` runs, in order, after the install.
+ *
+ * These are the checks the generated repository's own CI runs, so passing here means the skeleton
+ * would pass there. They are **not** a second implementation of anything: the oracle is the
+ * generated repository's toolchain, which is the only thing that can catch a template that renders
+ * fine but does not compile, lint or format.
+ */
+const VERIFY_STEPS = ['check', 'lint', 'format:check']
 
 /**
  * Files that must be **byte-identical** across repositories.
@@ -221,7 +239,7 @@ function buildContext(opts) {
     version: opts.version,
     dshRange: opts.dshRange,
     pm: profile.pm,
-    install: profile.install,
+    install: profile.installFrozen,
     run: profile.run,
     pmSetup: profile.pmSetup,
     builderDeps: profile.builderDeps,
@@ -413,7 +431,8 @@ function usage() {
       `  --host-only     skip the browser half\n` +
       `  --dry-run       print what would be written, write nothing\n` +
       `  --force         write even when the target is not empty\n` +
-      `  --install       run a frozen install afterwards, producing the lockfile\n`,
+      `  --install       install afterwards, producing the lockfile\n` +
+      `  --verify        --install, then run the generated repository's own CI checks\n`,
   )
 }
 
@@ -436,6 +455,7 @@ function parseCliArgs(argv) {
       'dry-run': { type: 'boolean', default: false },
       force: { type: 'boolean', default: false },
       install: { type: 'boolean', default: false },
+      verify: { type: 'boolean', default: false },
       help: { type: 'boolean', default: false },
     },
   })
@@ -446,6 +466,26 @@ function gitUserName() {
   const result = spawnSync('git', ['config', 'user.name'], { encoding: 'utf8' })
   const name = (result.stdout ?? '').trim()
   return name === '' ? 'TODO' : name
+}
+
+/**
+ * Run one command line in the target directory, loudly.
+ *
+ * The output is inherited rather than captured: a captured failure that ends up empty reads exactly
+ * like a pass, and this script exists to make template rot loud.
+ *
+ * `shell` only on Windows, where `npm` / `pnpm` are `.cmd` shims that `spawnSync` cannot find by
+ * itself. That is the single platform branch in this file.
+ */
+function run(command, cwd, failureNote) {
+  process.stdout.write(`\n$ ${command}\n`)
+  const [bin, ...args] = command.split(' ')
+  const result = spawnSync(bin, args, {
+    cwd,
+    stdio: 'inherit',
+    shell: process.platform === 'win32',
+  })
+  if (result.status !== 0) die(`${failureNote} (${command})`, 2)
 }
 
 function main() {
@@ -500,17 +540,16 @@ function main() {
 
   write(files, target, buildContext(opts), { force: values.force })
 
-  if (values.install) {
-    const profile = PROFILES[opts.profile]
-    const [command, ...args] = profile.install.split(' ')
-    process.stdout.write(`\n${profile.install}\n`)
-    const result = spawnSync(command, args, {
-      cwd: target,
-      stdio: 'inherit',
-      shell: process.platform === 'win32',
-    })
-    if (result.status !== 0) {
-      die('install failed — no lockfile was produced, and CI\'s frozen install will go red', 2)
+  // `--verify` implies `--install`: there is nothing to check without a dependency tree.
+  const profile = PROFILES[opts.profile]
+  if (values.install || values.verify) {
+    run(profile.installFresh, target, 'install failed — no lockfile was produced, and CI goes red')
+
+    if (values.verify) {
+      for (const step of VERIFY_STEPS) {
+        run(`${profile.run} ${step}`, target, `${step} failed on the generated repository`)
+      }
+      process.stdout.write(`\nverified: ${VERIFY_STEPS.join(', ')} all green\n`)
     }
   }
 

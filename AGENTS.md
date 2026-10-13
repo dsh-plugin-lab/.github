@@ -26,6 +26,9 @@
 - 换行校验：`git diff --check`
 - 铺新仓骨架：`node scripts/scaffold.mjs <空目录> [--profile npm-tsc|pnpm-tsdown] [--host-only]`
   （先 `--dry-run` 看清单；目标非空会被拒绝，这是有意的 —— 它只给空目录用）
+- **改过 `templates/` 就跑一遍 `--verify`**：它装依赖并跑生成仓自己的 CI 检查
+  （`check` / `lint` / `format:check`）。这是模板唯一的验收手段 —— 本仓没有 CI，
+  模板坏了不会有别的东西报出来
 - 核对逐字相同件：`node scripts/scaffold.mjs check <仓目录>...` —— 模板那一份与仓内同名文件
   做 SHA-256 比对。**不一致不必然是缺陷**（分号、锁文件名本来就是逐仓参数），
   它报的是「知道它不同」，不是「强行一样」

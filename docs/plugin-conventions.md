@@ -50,8 +50,9 @@ Four criteria that follow from the mechanism:
 
 **A scaffold seeds; it does not synchronise**: `scripts/scaffold.mjs` + `templates/plugin/` lay down a
 new repository's skeleton **once** and never write back into an existing repository — so copies stay
-held together by byte-identity exactly as above. Its `check` subcommand is the **execution body this
-criterion has so far lacked**. Reasoning → [decision: the scaffold seeds, it does not sync](../.agents/notes/2026-10-12-scaffold-seeds-not-syncs.md).
+held together by byte-identity exactly as above. Its `check` subcommand is the execution body for that
+criterion; `--verify` generates into a scratch directory and runs the generated repository's own
+checks, which is what accepts a template edit. Reasoning → [decision: the scaffold seeds, it does not sync](../.agents/notes/2026-10-12-scaffold-seeds-not-syncs.md).
 
 **Carrier status**: no shared package and no extracted copies. Knowledge travels as pointers (the host's official sources); assertions are written per repository, accepting two-way sync.
 

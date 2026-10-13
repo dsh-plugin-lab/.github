@@ -23,14 +23,9 @@
 
 ---
 
-> [!NOTE]
-> This repository was produced by a scaffold and is **still only a skeleton**: it installs, builds
-> and tests, but does not do anything yet. Start from what it actually offers and replace the
-> placeholders below.
-
 ## What it offers
 
-TODO: one line on what this plugin gives the user, then the capabilities, item by item.
+TODO: what this plugin gives the user, and the capabilities it adds.
 
 ## Install
 
@@ -40,13 +35,11 @@ dsh plugin --profile <profile> add {{name}}
 
 ## Compatibility
 
-TODO: state the host line this supports and where the dividing line is. **Do not copy host version
-numbers that drift** — the criterion is `engines.dsh` in `package.json`, so look up a concrete value
-when you need one.
+TODO: the host line this supports, and where the dividing line is.
 
 ## Configuration
 
-TODO: what can be configured, where it is stored, and what the defaults are.
+TODO: what can be configured, where it is stored, and the defaults.
 
 ## Development
 
