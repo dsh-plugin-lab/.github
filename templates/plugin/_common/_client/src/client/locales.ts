@@ -1,37 +1,40 @@
 /**
- * 本地化词典。`zh` 是键集真源，`en` 用 `Record<LocaleKey, string>` 做编译期完整性检查。
+ * Localization dictionary. `zh` is the source of truth for the key set; `en` is typed as
+ * `Record<LocaleKey, string>` so a missing key is a compile error.
  *
- * 界面上的**每一句**可见文字都要走这里，不在组件里写死字符串。理由很实在：
- * 词典是纯数据，测试能直接 import 它做键集对账；写死在组件里的字符串谁都数不清。
+ * **Every** visible string in the UI goes through here rather than being written into a component.
+ * The reason is practical: the dictionary is plain data, so a test can import it and reconcile key
+ * sets, whereas strings buried in components cannot be counted by anyone.
  */
 
-/** 词典命名空间。必须与 slot 注册项上的 `locale` 字段一致。 */
+/** Dictionary namespace. Must match the `locale` field on the slot registration. */
 export const NS = '{{name}}'
 
-/** 中文词典（键集真源）。 */
+/** Chinese dictionary (the source of truth for the key set). */
 export const zh = {
   'marker.label': '{{displayName}}',
 } as const
 
-/** 词典键。 */
+/** Dictionary key. */
 export type LocaleKey = keyof typeof zh
 
-/** 英文词典。缺键会在编译期报错。 */
+/** English dictionary. A missing key is a compile error. */
 export const en: Record<LocaleKey, string> = {
   'marker.label': '{{displayName}}',
 }
 
-/** 取词典。未知语言回落英文。 */
+/** Look up a dictionary. An unknown language falls back to English. */
 export function dictionaryFor(language: string): Record<LocaleKey, string> {
   return language.toLowerCase().startsWith('zh') ? zh : en
 }
 
 /**
- * 极简插值：把 `{name}` 换成实参，取不到的键原样留下（不抛错，也不吞掉）。
+ * Minimal interpolation: replaces `{name}` with the argument, and leaves a key it cannot resolve
+ * exactly as it found it (neither throwing nor swallowing it).
  *
- * `?? whole` 不是装饰：`noUncheckedIndexedAccess` 打开时索引访问的类型是
- * `string | undefined`，少了它这里就是 TS2769 —— 而那个开关在参考仓里是开着的
- * （各仓参数不同，模板必须两种配方都过）。
+ * The `?? whole` is not decoration: with `noUncheckedIndexedAccess` on, an index access has type
+ * `string | undefined`, and without it this line is TS2769 — and that switch is on in the reference
+ * repositories, so the template has to pass under both.
  */
 export function interpolate(template: string, params: Record<string, string>): string {
   return template.replace(/\{(\w+)\}/g, (whole, name: string) =>

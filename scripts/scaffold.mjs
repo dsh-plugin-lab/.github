@@ -1,35 +1,38 @@
 #!/usr/bin/env node
 /**
- * 插件仓脚手架 —— 给**空目录**铺一个能过 CI 的 Cordis 插件仓骨架。
+ * Plugin repository scaffold — lays a CI-passing Cordis plugin repository skeleton into an **empty**
+ * directory.
  *
- * 这是[插件通用约定](../../docs/plugin-conventions.md)第三节「各仓自持各件的标准形状」的
- * **可执行形态**：把「逐字相同」「形状固定」两类分开处理，逐字件走字节拷贝，
- * 其余走 `{{token}}` 替换。它只**播种**，不回写已存在的仓 —— 副本之间照旧靠逐字相同互相约束，
- * 不由这里生成（见 [.agents/notes/2026-10-12-scaffold-seeds-not-syncs.md]）。
+ * This is the **executable form** of section 3 of the plugin conventions ("standard shapes for what
+ * each repository keeps"): files that must be byte-identical are copied as bytes, everything else is
+ * rendered from `{{token}}` placeholders. It only **seeds**; it never writes back into an existing
+ * repository, so copies stay held together by byte-identity rather than by generation from here
+ * (see .agents/notes/2026-10-12-scaffold-seeds-not-syncs.md).
  *
- * 用法：
- *   node scripts/scaffold.mjs <目录> [选项]
- *   node scripts/scaffold.mjs check <仓目录>...
+ * Usage:
+ *   node scripts/scaffold.mjs <directory> [options]
+ *   node scripts/scaffold.mjs check <repo directory>...
  *
- * 选项：
- *   --profile <npm-tsc|pnpm-tsdown>  构建/包管理器配方，默认 npm-tsc
- *   --name <包名>                    默认取目标目录名
- *   --display-name <显示名>          默认等于包名
- *   --description <一句话>           默认留 TODO
- *   --author <作者>                  默认取 git config user.name
- *   --license-holder <署名行>        默认 `Copyright (c) <年> <作者>`，可重复传入多行
- *   --owner <GitHub 组织>            默认 dsh-plugin-lab
- *   --version <版本号>               默认 0.1.0
- *   --dsh-range <SemVer 区间>        默认当前宿主兼容线（会漂，发布前现核）
- *   --host-only                      不生成浏览器半边（无 src/client、无 client 构建）
- *   --dry-run                        只打印将要写什么
- *   --force                          目标目录非空时也写
- *   --install                        写完后跑一次冻结安装，产出锁文件
+ * Options:
+ *   --profile <npm-tsc|pnpm-tsdown>  Build / package-manager recipe; defaults to npm-tsc
+ *   --name <package name>            Defaults to the target directory's base name
+ *   --display-name <name>            Defaults to the package name
+ *   --description <one line>         Defaults to a TODO
+ *   --author <author>                Defaults to `git config user.name`
+ *   --license-holder <line>          Defaults to `Copyright (c) <year> <author>`; repeatable
+ *   --owner <GitHub organization>    Defaults to dsh-plugin-lab
+ *   --version <version>              Defaults to 0.1.0
+ *   --dsh-range <SemVer range>       Defaults to today's host line (it drifts — re-check before release)
+ *   --host-only                      Skip the browser half (no src/client, no client build)
+ *   --dry-run                        Print what would be written, write nothing
+ *   --force                          Write even when the target directory is not empty
+ *   --install                        Run a frozen install afterwards, producing the lockfile
  *   --help
  *
- * 退出码：0 = 成功 / 1 = 用法错或校验失败 / 2 = 前置条件不满足。
+ * Exit codes: 0 = success / 1 = usage error or failed validation / 2 = precondition unmet.
  *
- * 零依赖：只用 node: 内建模块。产物本身是零依赖仓，用一堆依赖去生成它自相矛盾。
+ * Zero dependencies: `node:` built-ins only. The artifact is itself a zero-dependency repository, so
+ * pulling in a dependency tree to generate it would be self-defeating.
  */
 
 import { spawnSync } from 'node:child_process'
@@ -42,7 +45,7 @@ import { fileURLToPath } from 'node:url'
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const TEMPLATES = path.join(HERE, '..', 'templates', 'plugin')
 
-/** 配方。改动这里就等于改所有新仓的起点。 */
+/** Recipes. Editing one changes the starting point of every new repository that uses it. */
 const PROFILES = {
   'npm-tsc': {
     pm: 'npm',
@@ -52,8 +55,7 @@ const PROFILES = {
     builderDeps: ',\n    "esbuild": "^0.28.2"',
     buildScript: 'tsc && tsc -p tsconfig.client.json && node scripts/build-client.mjs',
     buildScriptHostOnly: 'tsc',
-    typecheck:
-      'tsc --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.test.json',
+    typecheck: 'tsc --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.test.json',
     typecheckHostOnly: 'tsc --noEmit && tsc -p tsconfig.test.json',
   },
   'pnpm-tsdown': {
@@ -61,7 +63,7 @@ const PROFILES = {
     install: 'pnpm install --frozen-lockfile --config.node-linker=hoisted',
     run: 'pnpm run',
     pmSetup:
-      '      # pnpm 必须在 setup-node 之前装好，`cache: pnpm` 才找得到 store。\n' +
+      '      # pnpm has to be installed before setup-node, or `cache: pnpm` cannot find the store.\n' +
       '      - uses: pnpm/action-setup@v4\n' +
       '        with:\n' +
       '          version: 11\n',
@@ -75,21 +77,26 @@ const PROFILES = {
 }
 
 /**
- * 跨仓**必须逐字节相同**的文件。
+ * Files that must be **byte-identical** across repositories.
  *
- * 这是判据，不是实现细节，所以写成显式清单 —— 与「怎么写出这些字节」（含不含 `{{`）
- * 是两件事，后者可以从模板内容推出来，前者不能。
+ * This is a criterion, not an implementation detail, so it is an explicit list: how these bytes get
+ * written (whether a template contains `{{`) is derivable from the content, but "these must match"
+ * is not.
  *
- * 取值依据（2026-10-12 实测三仓）：前三条三仓逐字相同；后两条在**同一个包管理器**的
- * 仓之间逐字相同（npm 与 pnpm 各一份），所以比对时接受任一变体。
+ * Deliberately **not** included, and why — both would otherwise look like identities:
+ * - `.gitattributes` and `.pre-commit-config.yaml` carry prose, and the prose differs: the four
+ *   repositories that already exist have it in Chinese, this template in English. They became
+ *   different files the moment the template's prose was translated. Aligning the existing
+ *   repositories is its own decision, not something a seeder does behind their backs.
+ * - `ci.yml`, `release.yml`, `compat.yml` are byte-identical copies too, but each is either
+ *   token-rendered per recipe or (release / compat) not generated at all here.
+ *
+ * Measured 2026-10-12 over the reference repositories: `.node-version` and
+ * `.github/workflows/release-drafter.yml` match across all of them;
+ * `.prettierignore` matches across repositories on the **same** package manager, so both recipe
+ * variants are accepted when comparing.
  */
-const IDENTITY_FILES = [
-  '.gitattributes',
-  '.node-version',
-  '.github/workflows/release-drafter.yml',
-  '.pre-commit-config.yaml',
-  '.prettierignore',
-]
+const IDENTITY_FILES = ['.node-version', '.github/workflows/release-drafter.yml', '.prettierignore']
 
 const BIN = 'scaffold'
 
@@ -98,7 +105,7 @@ function die(message, code = 1) {
   process.exit(code)
 }
 
-/** 递归列出目录下所有文件（相对路径、排序，保证输出确定）。 */
+/** Recursively list every file under a directory (relative paths, sorted, so output is deterministic). */
 function walk(root, prefix = '') {
   const out = []
   for (const entry of fs.readdirSync(root, { withFileTypes: true }).sort((a, b) =>
@@ -116,11 +123,12 @@ function sha256(file) {
 }
 
 /**
- * `{{token}}` 替换。
+ * `{{token}}` substitution.
  *
- * **多趟**而不是一趟：片段型 token（如 `clientPeerDeps`）的值里还含别的 token
- * （如 `dshRange`），一趟替换完会留下未展开的记号 —— 而「未展开」与「本来就该长这样」
- * 在结果里长得一样。所以循环到不再变化为止，再断言没有已知 token 残留。
+ * **Several passes**, not one: a fragment token's value (say `clientPeerDeps`) itself contains other
+ * tokens (say `dshRange`), and a single pass would leave them unexpanded — while "left unexpanded"
+ * and "meant to look like that" are indistinguishable in the result. So it loops until nothing
+ * changes, and leaves the residual assertion to the caller.
  */
 function render(content, ctx) {
   let out = content
@@ -138,12 +146,12 @@ function render(content, ctx) {
 }
 
 /**
- * 找出渲染后仍然残留的 `{{token}}` 记号。
+ * Find `{{token}}` markers left over after rendering.
  *
- * 只认**标识符形状**的名字（`\w+`），两个原因：
- * ① GitHub Actions 的表达式 `${{ toJSON(needs) }}` 不是占位符；
- * ② JSX 的内联对象 `style={{ display: 'block' }}` **也不是** —— 它是双花括号语法，
- *    天真地匹配 `\{\{...\}\}` 会把每一处 JSX 内联样式都判成未展开的记号（实测踩过）。
+ * Only **identifier-shaped** names (`\w+`) count, for two reasons:
+ * 1. GitHub Actions expressions such as `${{ toJSON(needs) }}` are not placeholders.
+ * 2. Neither is JSX's inline object form, `style={{ display: 'block' }}` — matching `\{\{...\}\}`
+ *    naively flags every inline style in the browser half as an unexpanded marker. Measured.
  */
 function leftoverTokens(content) {
   const found = []
@@ -227,17 +235,17 @@ function buildContext(opts) {
 }
 
 /**
- * 「只属于浏览器半边」的标记。
+ * Marker for "belongs to the browser half only".
  *
- * 为什么是**目录内的子目录**而不是顶层加一层：切片要正交。
- * 顶层加 `_client` 一层的话，`--host-only` 就得「跳过一个顶层层」，
- * 而 tsconfig.client.json / build-client.mjs 是**按包管理器不同**的 ——
- * 它们必须同时属于「client 切片」和「配方切片」，二维的切片塞不进一维的层序。
- * 放在每一层内部的 `_client/` 下，两个维度就都表达得出来。
+ * Why a subdirectory **inside** each layer rather than one more top-level layer: the two slices have
+ * to stay orthogonal. With a top-level `_client` layer, `--host-only` would mean "skip a top-level
+ * layer", but `tsconfig.client.json` and `build-client.mjs` also differ **by package manager** — they
+ * belong to the client slice *and* the recipe slice at once, and two-dimensional slicing does not fit
+ * a one-dimensional layer sequence. Under `_client/` within each layer, both dimensions fit.
  */
 const CLIENT_MARKER = '_client/'
 
-/** 纯函数：决定写哪些文件。只读模板目录，不碰目标目录。 */
+/** Pure function: decide which files get written. Reads the template tree only; never touches the target. */
 function plan(opts) {
   const layers = ['_common', `_${opts.profile}`]
 
@@ -245,15 +253,15 @@ function plan(opts) {
   const seen = new Map()
   for (const layer of layers) {
     const root = path.join(TEMPLATES, layer)
-    if (!fs.existsSync(root)) die(`模板层不存在：templates/plugin/${layer}`, 2)
+    if (!fs.existsSync(root)) die(`template layer does not exist: templates/plugin/${layer}`, 2)
     for (const raw of walk(root)) {
       const clientOnly = raw.startsWith(CLIENT_MARKER)
       if (clientOnly && opts.hostOnly) continue
       const rel = clientOnly ? raw.slice(CLIENT_MARKER.length) : raw
       if (seen.has(rel)) {
         die(
-          `模板层冲突：${rel} 同时来自 ${seen.get(rel)} 与 ${layer}/${raw} —— ` +
-            `叠层只允许补充，不允许覆盖（覆盖会静默决定哪一个生效）`,
+          `template layer collision: ${rel} comes from both ${seen.get(rel)} and ${layer}/${raw} — ` +
+            `layering may only add, never override (an override silently decides which one wins)`,
         )
       }
       seen.set(rel, `${layer}/${raw}`)
@@ -264,29 +272,33 @@ function plan(opts) {
 }
 
 /**
- * 落盘。
+ * Commit to disk.
  *
- * **两段式**：先把全部文件在内存里渲染完并校验，再统一写。
- * 一段式（边渲染边写）在某个模板有未展开记号时，会在目标目录留下**半个仓** ——
- * 而半个仓比空目录更坏：它看起来像成了，且下次重跑会被「目标非空」挡住。
- * 实测踩过这一次。
+ * **Two phases**: render and validate everything in memory first, then write. A single phase (render
+ * and write as you go) leaves **half a repository** behind when one template has an unexpanded
+ * marker — and half a repository is worse than an empty directory: it looks like it worked, and a
+ * rerun is refused by "target is not empty". Measured once.
  */
 function write(files, destDir, ctx, { force }) {
   if (fs.existsSync(destDir) && !force) {
     const entries = fs.readdirSync(destDir).filter((name) => name !== '.git')
     if (entries.length > 0) {
-      die(`目标目录非空：${destDir}\n（脚手架只给空目录用；确要写进去请加 --force）`)
+      die(
+        `target directory is not empty: ${destDir}\n` +
+          `(the scaffold is for empty directories; pass --force to write anyway)`,
+      )
     }
   }
 
-  // 第一段：全部渲染 + 全部校验。这一段**不碰目标目录**。
+  // Phase one: render everything and validate everything. This phase **does not touch the target**.
   const outputs = []
   let copied = 0
   let rendered = 0
   for (const file of files) {
     const raw = fs.readFileSync(file.src, 'utf8')
     if (!raw.includes('{{')) {
-      // 逐字件：拷字节，连进内存渲染都不做 —— 「逐字相同」在代码层面因此可审计。
+      // An identity file: copy the bytes, without even rendering them in memory — which is what makes
+      // "byte-identical" auditable at the code level.
       outputs.push({ rel: file.rel, bytes: fs.readFileSync(file.src) })
       copied += 1
       continue
@@ -295,45 +307,53 @@ function write(files, destDir, ctx, { force }) {
     const leftover = leftoverTokens(out)
     if (leftover.length > 0) {
       die(
-        `模板 ${file.layer}/${file.rel} 里有未展开的记号：${leftover.join(' ')}\n` +
-          `（要么补齐对应的 ctx 字段，要么它本来就不是占位符）\n` +
-          `目标目录未被写入。`,
+        `template ${file.layer}/${file.rel} has unexpanded markers: ${leftover.join(' ')}\n` +
+          `(either supply the matching ctx field, or it was never a placeholder)\n` +
+          `nothing was written to the target directory.`,
       )
-    }    outputs.push({ rel: file.rel, bytes: Buffer.from(out, 'utf8') })
+    }
+    outputs.push({ rel: file.rel, bytes: Buffer.from(out, 'utf8') })
     rendered += 1
   }
 
-  // 结构校验也放在第一段：产物里的 JSON 必须真的能解析。
-  // 这一条是**实测逼出来的**：片段型 token 少写一个逗号，渲染照样「成功」，
-  // 生成的是一个 JSON 语法都不对的 package.json —— 而它要到 `npm install` 才炸，
-  // 那时人已经在看别的了。JSON 校验在这里是秒级的，所以在写盘前做。
+  // Structural validation also belongs to phase one: produced JSON has to actually parse.
+  // This one was **forced by measurement**: a fragment token missing a comma still renders
+  // "successfully" and yields a package.json that is not valid JSON — and that only explodes at
+  // `npm install`, by which point attention has moved on. Parsing JSON here costs milliseconds.
   //
-  // **例外：tsconfig*.json 走 JSONC**（TypeScript 官方允许注释，三个参考仓也都写了注释），
-  // 用严格 JSON 去判它们会冤枉好人。例外写在这里而不是反过来列白名单：
-  // 新加的 JSON 默认**被校验**，漏判比误判危险得多。
+  // **Exception: tsconfig*.json is JSONC.** TypeScript permits comments there and every reference
+  // repository writes them, so judging those with strict JSON would convict the innocent. The
+  // exception is named here rather than turning the rule into an allowlist: newly added JSON is
+  // validated by default, and a miss is far more dangerous than a false alarm.
   for (const output of outputs) {
     if (!output.rel.endsWith('.json')) continue
     if (/^tsconfig(\.[\w.-]+)?\.json$/.test(output.rel)) continue
     try {
       JSON.parse(output.bytes.toString('utf8'))
     } catch (error) {
-      die(`模板产出的 ${output.rel} 不是合法 JSON：${error.message}\n目标目录未被写入。`)
+      die(
+        `${output.rel} produced by the template is not valid JSON: ${error.message}\n` +
+          `nothing was written to the target directory.`,
+      )
     }
   }
 
-  // 第二段：写。
+  // Phase two: write.
   for (const output of outputs) {
     const dest = path.join(destDir, output.rel)
     fs.mkdirSync(path.dirname(dest), { recursive: true })
     fs.writeFileSync(dest, output.bytes)
   }
-  process.stdout.write(`写入 ${files.length} 个文件（逐字拷贝 ${copied}，替换 ${rendered}）\n`)
+  process.stdout.write(
+    `wrote ${files.length} files (byte copies ${copied}, rendered ${rendered})\n`,
+  )
 }
 
 function check(repos) {
-  if (repos.length === 0) die('check 需要一个或多个仓目录', 1)
+  if (repos.length === 0) die('check needs one or more repository directories', 1)
 
-  // 变体：同一个文件在不同层里可能有多个来源（npm / pnpm 各一份），任一命中即算相同。
+  // Variants: one file may have several sources across layers (one per package manager), and matching
+  // any of them counts as identical.
   const variants = new Map()
   for (const layer of fs.readdirSync(TEMPLATES).sort()) {
     const root = path.join(TEMPLATES, layer)
@@ -346,11 +366,13 @@ function check(repos) {
   }
 
   const missing = IDENTITY_FILES.filter((rel) => !variants.has(rel))
-  if (missing.length > 0) die(`模板里找不到这些应当逐字相同的文件：${missing.join(', ')}`, 2)
+  if (missing.length > 0) {
+    die(`these files should be byte-identical but are missing from the templates: ${missing.join(', ')}`, 2)
+  }
 
   let bad = 0
   for (const repo of repos) {
-    if (!fs.existsSync(repo)) die(`仓目录不存在：${repo}`, 2)
+    if (!fs.existsSync(repo)) die(`repository directory does not exist: ${repo}`, 2)
     process.stdout.write(`\n${repo}\n`)
     for (const rel of IDENTITY_FILES) {
       const target = path.join(repo, rel)
@@ -362,36 +384,36 @@ function check(repos) {
       const got = sha256(target)
       const hit = variants.get(rel).find((v) => sha256(v.src) === got)
       if (hit) {
-        process.stdout.write(`  OK       ${rel}  (匹配 ${hit.layer})\n`)
+        process.stdout.write(`  OK       ${rel}  (matches ${hit.layer})\n`)
       } else {
         const layers = variants.get(rel).map((v) => v.layer).join(' / ')
-        process.stdout.write(`  DIFF     ${rel}  (与 ${layers} 都不同)\n`)
+        process.stdout.write(`  DIFF     ${rel}  (differs from ${layers})\n`)
         bad += 1
       }
     }
   }
 
   process.stdout.write(
-    `\n判定：${bad === 0 ? '全部逐字相同' : `${bad} 处不一致`}\n` +
-      `不一致不必然是缺陷 —— 这几个文件里有些是逐仓参数（分号、锁文件名）。\n` +
-      `要的是「知道它不同」，不是「强行一样」。\n`,
+    `\nverdict: ${bad === 0 ? 'all byte-identical' : `${bad} differ`}\n` +
+      `A difference is not necessarily a defect — some of these files carry per-repository\n` +
+      `parameters (semicolons, lockfile name). The point is to *know* it differs, not to force it equal.\n`,
   )
   if (bad > 0) process.exit(1)
 }
 
 function usage() {
   process.stdout.write(
-    `${BIN} —— 给空目录铺一个 Cordis 插件仓骨架\n\n` +
-      `  node scripts/scaffold.mjs <目录> [选项]\n` +
-      `  node scripts/scaffold.mjs check <仓目录>...\n\n` +
-      `选项：\n` +
-      `  --profile <npm-tsc|pnpm-tsdown>  默认 npm-tsc\n` +
+    `${BIN} — lay a Cordis plugin repository skeleton into an empty directory\n\n` +
+      `  node scripts/scaffold.mjs <directory> [options]\n` +
+      `  node scripts/scaffold.mjs check <repo directory>...\n\n` +
+      `Options:\n` +
+      `  --profile <npm-tsc|pnpm-tsdown>  defaults to npm-tsc\n` +
       `  --name / --display-name / --description / --author / --license-holder\n` +
       `  --owner / --version / --dsh-range\n` +
-      `  --host-only    不生成浏览器半边\n` +
-      `  --dry-run      只打印将要写什么\n` +
-      `  --force        目标非空也写\n` +
-      `  --install      写完跑一次冻结安装，产出锁文件\n`,
+      `  --host-only     skip the browser half\n` +
+      `  --dry-run       print what would be written, write nothing\n` +
+      `  --force         write even when the target is not empty\n` +
+      `  --install       run a frozen install afterwards, producing the lockfile\n`,
   )
 }
 
@@ -408,7 +430,7 @@ function parseCliArgs(argv) {
       'license-holder': { type: 'string', multiple: true },
       owner: { type: 'string', default: 'dsh-plugin-lab' },
       version: { type: 'string', default: '0.1.0' },
-      // 这是**会漂的值**：默认值只是「今天这条线」，发布前要现核。
+      // A **drifting value**: the default is only "today's line" and has to be re-checked before release.
       'dsh-range': { type: 'string', default: '^0.1.7-rc.1 || ^0.2.0-rc.1' },
       'host-only': { type: 'boolean', default: false },
       'dry-run': { type: 'boolean', default: false },
@@ -442,10 +464,10 @@ function main() {
   const dest = positionals[0]
   if (dest === undefined) {
     usage()
-    die('缺少目标目录', 1)
+    die('no target directory given', 1)
   }
   if (!(values.profile in PROFILES)) {
-    die(`未知配方：${values.profile}（可选：${Object.keys(PROFILES).join(' / ')}）`, 1)
+    die(`unknown recipe: ${values.profile} (available: ${Object.keys(PROFILES).join(' / ')})`, 1)
   }
 
   const target = path.resolve(dest)
@@ -469,7 +491,9 @@ function main() {
   const files = plan(opts)
 
   if (values['dry-run']) {
-    process.stdout.write(`将写入 ${target}（${files.length} 个文件，配方 ${opts.profile}）：\n`)
+    process.stdout.write(
+      `would write ${files.length} files to ${target} (recipe ${opts.profile}):\n`,
+    )
     for (const file of files) process.stdout.write(`  ${file.rel}\n`)
     return
   }
@@ -480,16 +504,24 @@ function main() {
     const profile = PROFILES[opts.profile]
     const [command, ...args] = profile.install.split(' ')
     process.stdout.write(`\n${profile.install}\n`)
-    const result = spawnSync(command, args, { cwd: target, stdio: 'inherit', shell: process.platform === 'win32' })
-    if (result.status !== 0) die('安装失败 —— 锁文件没产出，CI 的冻结安装会直接红', 2)
+    const result = spawnSync(command, args, {
+      cwd: target,
+      stdio: 'inherit',
+      shell: process.platform === 'win32',
+    })
+    if (result.status !== 0) {
+      die('install failed — no lockfile was produced, and CI\'s frozen install will go red', 2)
+    }
   }
 
   process.stdout.write(
-    `\n下一步（脚手架不替你做）：\n` +
-      `  1. 换掉 icon.svg（现在是一个占位图形，发布前必须是自制或有授权的图）\n` +
-      `  2. 写 README.md 的「提供什么」一节，以及 AGENTS.md 里每一个 TODO\n` +
-      `  3. 依赖清单按实际用到的宿主服务改（现在只有起步那几条，没有一条是验证过的）\n` +
-      `  4. 装依赖并跑 \`${PROFILES[opts.profile].run} check\`\n`,
+    `\nnext steps (the scaffold does not do these for you):\n` +
+      `  1. Replace icon.svg — it is a placeholder shape, and publishing needs artwork you made or\n` +
+      `     are licensed to use. Follow the icon criteria in the plugin conventions.\n` +
+      `  2. Write the "What it offers" section of README.md, and every TODO in AGENTS.md.\n` +
+      `  3. Adjust the dependency list to the host services actually used — the starting set is\n` +
+      `     unverified, and none of it was validated against this plugin.\n` +
+      `  4. Install and run \`${PROFILES[opts.profile].run} check\`.\n`,
   )
 }
 

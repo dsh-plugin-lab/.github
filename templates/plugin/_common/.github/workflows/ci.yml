@@ -1,8 +1,8 @@
-# 日常 CI：每次推 main 与每个 PR 都跑类型检查、构建与全量测试。
+# Day-to-day CI: every push to main and every PR runs the type check, the build and the full test suite.
 #
-# 用冻结安装（{{install}}）而不是普通安装：它严格按 lockfile 装，lockfile 与
-# package.json 不同步时**直接失败** —— 这正是要在 CI 里拦下的情况。
-# 判据：CI 的安装永远是冻结模式，绝不联网解析新版本。
+# A frozen install ({{install}}) rather than a plain one: it installs strictly from the lockfile and
+# **fails outright** when the lockfile and package.json disagree — which is exactly what this is here
+# to catch. The criterion: CI installs are always frozen and never resolve new versions over the network.
 name: CI
 
 on:
@@ -22,7 +22,7 @@ jobs:
 {{pmSetup}}
       - uses: actions/setup-node@v7
         with:
-          # 版本基线以 .node-version 为唯一来源，避免 CI 与本机漂移。
+          # .node-version is the single source for the baseline, so CI cannot drift from a laptop.
           node-version-file: .node-version
           cache: {{pm}}
 
@@ -39,13 +39,13 @@ jobs:
       - name: Format check
         run: {{run}} format:check
 
-  # 收口 job —— ruleset 的 required_status_checks 只配这一个名字（CI Success），
-  # 本仓内部 job 增删时规则集无需改动。改本 job 前必读三条：
-  #   1. 判定只放 step 级：放 job 级时条件为假会让本 job 变 skipped，
-  #      而 GitHub 把 skipped 当 Success —— 那正好是我们要防的假绿。
-  #   2. needs 必须列全本文件所有 job id；漏一个，那个 job 红了也照样放行。
-  #   3. skipped 一并判红：本 workflow 没有合法的 if: 跳过，出现 skipped
-  #      只可能是上游失败级联（上游同在 needs 里，会同时判红）。
+  # The closing job — the ruleset's required_status_checks names this one status ("CI Success"), so
+  # jobs inside this file can come and go without touching the ruleset. Three things cannot move:
+  #   1. Judge at step level only. At job level a false condition turns the job `skipped`, and GitHub
+  #      treats `skipped` as success — which is precisely the false green we are guarding against.
+  #   2. `needs` must list every job id in this file; miss one and that job can go red while this passes.
+  #   3. `skipped` goes red too. This workflow has no legitimate `if:` skip, so a `skipped` can only be
+  #      a cascade from an upstream failure (and that upstream is in `needs`, so it also goes red).
   ci-success:
     name: CI Success
     runs-on: ubuntu-latest
@@ -55,6 +55,6 @@ jobs:
       - name: Verify all jobs succeeded
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
         run: |
-          echo "::error::有 job 未成功 —— CI Success 判红（原因见本 job 上方注释）"
+          echo "::error::a job did not succeed — CI Success goes red (see the comment above this job)"
           echo '${{ toJSON(needs) }}'
           exit 1

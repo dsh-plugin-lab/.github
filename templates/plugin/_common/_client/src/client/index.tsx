@@ -1,23 +1,27 @@
 /**
- * 浏览器半边入口。
+ * Browser half entry point.
  *
- * 产物由构建脚本打成宿主客户端模块系统要的 lazy-CJS factory 信封
- * （`window.__ModuleLoader__.load({ id, factory })`，id 等于包名）。
- * 所以这里写正常的 ESM + JSX，信封是构建期的事。
+ * The build script wraps this into the lazy-CJS factory envelope the host's client module system
+ * wants (`window.__ModuleLoader__.load({ id, factory })`, with `id` equal to the package name), so
+ * this file is ordinary ESM + JSX and the envelope is a build-time concern.
  *
- * **工厂体里不要有副作用**：样式、定时器、监听器一律在 `apply` 里用
- * `ctx.effect` / `ctx.on` 注册并返回清理函数。
+ * **Keep the factory body free of side effects**: styles, timers and listeners are registered inside
+ * `apply` with `ctx.effect` / `ctx.on`, and return their cleanup.
  *
- * 这里的上下文类型是**手写的结构类型**，不是从宿主包 import 来的 ——
- * 骨架必须能独立编译，不能因为少一行类型增强就红。接上真的宿主类型后替换掉它。
+ * The context type here is a **hand-written structural type**, not an import from the host packages:
+ * a skeleton has to compile on its own and must not go red because one type augmentation is missing.
+ * Replace it once the real host types are wired in.
  */
 
 import { dictionaryFor, type LocaleKey, NS } from './locales.ts'
 
-/** 本插件需要的客户端服务。只用 slots 就只写 slots —— 声明了却不用的服务会让启动顺序无谓变复杂。 */
+/**
+ * The client services this plugin needs. It uses slots, so it lists slots — declaring a service you
+ * never touch complicates startup ordering for nothing.
+ */
 export const inject = ['slots']
 
-/** 宿主暴露给本插件的那一小块面。接上真类型后删掉这个别名。 */
+/** The slice of the host surface this plugin reaches for. Delete this alias once the real types are in. */
 type ClientContext = {
   locale?: { language?: string }
   slots: {
@@ -26,12 +30,13 @@ type ClientContext = {
   }
 }
 
-/** 本插件占用的 slot。换 slot 时要同步改这里与 `package.json` 的 `dsh.client.inject`。 */
+/** The slot this plugin occupies. Changing it means changing this and `dsh.client.inject` together. */
 const SLOT = 'conversation.composer.dock'
 
 export function apply(ctx: ClientContext): void {
-  // 词典在 apply 期取一次。**真的组件要订阅语言变化服务**（切换语言时重新取），
-  // 骨架先不做这一步：它现在只有一个常量词条，订阅与否都看不出差别。
+  // The dictionary is read once, at apply time. **A real component subscribes to the language
+  // service** so it re-reads on a language switch; the skeleton skips that because it holds a single
+  // constant entry and subscribing would change nothing observable.
   const text = dictionaryFor(ctx.locale?.language ?? 'en')
   ctx.slots.inject(SLOT, () =>
     ctx.slots.register({ name: SLOT, id: '{{name}}', order: 5 }, () => Marker(text)),
@@ -39,10 +44,11 @@ export function apply(ctx: ClientContext): void {
 }
 
 /**
- * 骨架里唯一的可见物：一个不抢版面的小圆点。
+ * The one visible thing in the skeleton: a small dot that does not fight for layout.
  *
- * 它的可访问名走词典 —— 界面文字过词典这条规矩从第一行代码起就成立，先立规矩再长内容。
- * 用 `currentColor` 而不是写死颜色：容器会继承宿主主题。
+ * Its accessible name goes through the dictionary — "visible text goes through the dictionary" holds
+ * from the very first line of code, so the rule is in place before there is any content to break it.
+ * `currentColor` rather than a hard-coded colour, so the container inherits the host theme.
  */
 function Marker(text: Record<LocaleKey, string>) {
   return (
@@ -59,5 +65,5 @@ function Marker(text: Record<LocaleKey, string>) {
   )
 }
 
-/** 词典命名空间即包名 —— 与 slot 注册项上的 `locale` 字段是同一个值。 */
+/** The dictionary namespace is the package name — the same value as the `locale` field on the slot. */
 export { NS }

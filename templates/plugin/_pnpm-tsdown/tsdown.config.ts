@@ -6,20 +6,21 @@ import { basename, dirname, resolve as resolvePath } from 'node:path'
 
 const PLUGIN_ID = '{{name}}'
 
-/** 读一次版本号，让 `src/version.ts` 在构建期拿到它。 */
+/** Read the version once so `src/version.ts` can pick it up at build time. */
 const PACKAGE_VERSION = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
   .version as string
 
-/** 构建期占位符；`src/version.ts` 读 `__DSH_PLUGIN_VERSION__`。 */
+/** Build-time define; `src/version.ts` reads `__DSH_PLUGIN_VERSION__`. */
 const VERSION_DEFINE = { __DSH_PLUGIN_VERSION__: JSON.stringify(PACKAGE_VERSION) }
 
 /**
- * 宿主提供的模块，一律不进浏览器包。
+ * Modules the host provides, kept out of the browser bundle.
  *
- * 这张清单是**护栏，不是文档**：被值导入却没写在这里的模块会被**内联**，
- * 而内联一份 React 运行时是致命的，不只是变胖 —— react-dom 的模块作用域读
- * `process.env.NODE_ENV`，内联后包会胀到 1MB 并在浏览器里报 `process is not defined`，
- * 插件直接激活失败，而宿主只会报一句 import error。
+ * This list is a **guardrail, not documentation**: anything imported by value and *not* named here
+ * gets **inlined**, and inlining a React runtime is fatal rather than merely fat. `react-dom`'s module
+ * scope reads `process.env.NODE_ENV`, so inlining it grows the bundle to ~1 MB and then throws
+ * `process is not defined` the moment the browser loads it — the plugin fails to activate and the
+ * host reports nothing but an import error.
  */
 const CLIENT_EXTERNALS = [
   'react',
@@ -32,17 +33,17 @@ const CLIENT_EXTERNALS = [
 ] as const
 
 /**
- * 虚拟 id 后缀。tsdown 自己的 CSS 护栏按 `.css` 结尾匹配，所以虚拟 id 不能以它结尾 ——
- * 整个目的就是把模块 CSS 挡在那条需要 `@tsdown/css` 的流水线之外。
+ * Virtual-id suffix. tsdown's own CSS guard matches ids ending in `.css`, so the virtual id must not
+ * end that way — the whole point is to keep module CSS away from a pipeline that would need `@tsdown/css`.
  */
 const CSS_VIRTUAL_PREFIX = '\0plugin-css:'
 const CSS_VIRTUAL_SUFFIX = '.js'
 
 /**
- * 产出一个 CSS Modules 模块：在工厂执行时注入样式表，并导出类名映射。
+ * Emit a CSS Modules module: it injects the stylesheet when the factory runs and exports the class map.
  *
- * 样式标签按 `data-plugin-css` 幂等：浏览器包每个 DSH 页面只加载一次，
- * 但热重载或第二个插件挂载同一模块时不能重复堆规则。
+ * The style tag is idempotent by `data-plugin-css`: the browser bundle loads once per DSH page, but a
+ * hot reload or a second plugin mounting the same module must not stack duplicate rules.
  */
 function styleInjectionModule(
   id: string,
@@ -66,8 +67,9 @@ function styleInjectionModule(
 }
 
 /**
- * 浏览器包的 CSS Modules：与 DSH 自己的客户端包同形 —— `x.module.css` 解析成一个
- * 虚拟模块，携带编译后的样式表并导出哈希类名，组件里写 `css.card` 而不是内联样式对象。
+ * CSS Modules for the browser bundle, the way DSH's own client packages build them: `x.module.css`
+ * resolves to a virtual module that carries the compiled stylesheet and exports the hashed class map,
+ * so component code writes `css.card` instead of an inline style object.
  */
 function cssModulesPlugin(id: string): Plugin {
   return {
@@ -83,7 +85,7 @@ function cssModulesPlugin(id: string): Plugin {
     async load(virtualId) {
       if (!virtualId.startsWith(CSS_VIRTUAL_PREFIX)) return null
       const fileId = virtualId.slice(CSS_VIRTUAL_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length)
-      // 虚拟 id 否则会把样式表藏出 watch 图。
+      // The virtual id would otherwise hide the stylesheet from the watch graph.
       this.addWatchFile(fileId)
       const { code, exports: cssExports } = transform({
         filename: fileId,
@@ -91,8 +93,9 @@ function cssModulesPlugin(id: string): Plugin {
         cssModules: { pattern: '[hash]_[local]' },
         minify: true,
       })
-      // 键要排序：`cssExports` 的返回顺序不确定，而产出的 JSON 保留插入顺序 ——
-      // 不排的话同一份源码每次构建都会得到不同的产物，「产物变了吗」这个问题就没法回答。
+      // Sort the keys: `cssExports` comes back in a non-deterministic order and the emitted JSON
+      // preserves insertion order — without this, identical source produces a different artifact on
+      // every build, and "did the artifact change?" becomes unanswerable.
       const classMap: Record<string, string> = {}
       for (const local of Object.keys(cssExports ?? {}).sort()) {
         classMap[local] = (cssExports as Record<string, { name: string }>)[local]!.name

@@ -1,46 +1,49 @@
-# {{name}} — 维护索引
+# {{name}} — maintenance index
 
-本文件只服务「在这个仓里怎么干活」。**它还只是骨架** —— 下面每一节都留了位置，
-随着这个仓长出真的规则，逐条替换掉。文档地图里不要预先写出还没有的文件的链接。
+This file covers one thing only: how to work inside this repository. **It is still a skeleton** —
+every section below is a placeholder, and you replace them one by one as the repository grows real
+rules. Do not put links to files that do not exist yet into the document map.
 
-## 状态
+## Status
 
-- 版本以 [package.json](package.json) 的 `version` 为准
-- 尚未发布
-- 尚未接入 CI 徽章之外的任何外部服务
+- The version is whatever [package.json](package.json) says under `version`
+- Not published yet
+- No external service wired up beyond the CI badge
 
-## 全局规则
+## Rules
 
-- **结论必须来自实测**，不来自文档推断。
-- **能落成校验的就不写散文**：不变量做成 `test/` 下的红线或 `scripts/` 下的检查，
-  这里只留指针。
-- **改文档就跑链接校验**（见「常用命令」）。跨节引用要带节名：`[文件 的「节名」](文件.md#锚点)`。
-- **一处一事实，别处只留指针**：一个事实有两个落点时，删掉一个。
-- **改动连带同步点**：谁引用了你改过的路径 / 名字 / 规则，同批改。
+- **Conclusions must come from measurement**, never from inference over documentation.
+- **If it can be a check, do not write prose.** Invariants become a redline under `test/` or a check
+  under `scripts/`; this file keeps a pointer to it and nothing more.
+- **Run the link check after touching any document** (see "Commands"). A cross-section reference
+  carries the section name: `[file's "section"](file.md#anchor)`.
+- **One fact, one home.** When a fact has two homes, delete one of them.
+- **Follow the change.** Whatever references the path, name or rule you just changed gets updated
+  in the same batch.
 
-TODO：把只对本仓成立的那几条判据写进来。
+TODO: write down the criteria that hold for this repository only.
 
-## 常用命令
+## Commands
 
 ```shell
 {{run}} check          # typecheck + build + test
-{{run}} format:check   # 格式
+{{run}} format:check   # formatting
 {{run}} lint           # ESLint
 ```
 
-TODO：加上本仓的链接校验与换行校验命令。
+TODO: add this repository's link check and line-ending check.
 
-## 文档地图
+## Document map
 
-- 对外说明 → [README.md](README.md)（另一语言见同目录的第二份门面）
-- 决策与依据记录 → [.agents/notes/](.agents/notes/)（目前是空壳）
-- 设计文档 → [docs/](docs/)（目前是空壳）
+- What it offers users → [README.md](README.md)
+- Decisions and their evidence → [.agents/notes/](.agents/notes/) (currently an empty shell)
+- Design documents → [docs/](docs/) (currently an empty shell)
 
-## 待办
+## To do
 
-- [ ] 把上面每一节的 TODO 换成本仓真实的内容
-- [ ] TODO：本仓自己的待定项
+- [ ] Replace every TODO above with what is actually true of this repository
+- [ ] TODO: this repository's own open questions
 
-## 活跃坑
+## Known traps
 
-TODO：踩过的坑逐条记在这里，或者落成红线。
+TODO: every trap you hit goes here, or becomes a redline.

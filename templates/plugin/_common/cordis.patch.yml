@@ -1,13 +1,15 @@
-# bundle patch —— 把本插件作为一行插入 dsh profile。
+# Bundle patch: inserts this plugin as one row in a dsh profile.
 #
-# 格式对齐 DSH 官方 bundle patch：顶层是 loader patch 条目数组；
-# `insert` 在 profile 根上追加插件行。
+# The format follows the official DSH bundle patch: the top level is an array of loader patch entries,
+# and `insert` appends plugin rows at the profile root.
 #
-# 关于 name：必须是 loader 能从 profile 的 node_modules 解析到的模块 id，即本包自身的包名。
+# About `name`: it must be a module id the loader can resolve from the profile's node_modules, which is
+# this package's own name.
 #
-# 关于 config：**不要在这里写凭据**。它已不是取值来源，写在这里只剩两个后果：
-# 启动期迁徙会把它搬进凭据存储，而组合配置那一行插件删不掉，只能每次启动告警请你手删。
-# 密钥应当从插件配置卡片写入，或放进环境变量。
+# About `config`: **never put credentials here.** This is no longer a source of values, so writing one
+# here has exactly two consequences — the startup migration moves it into the credential store, and the
+# row cannot be deleted from the composed config, so every startup warns you to remove it by hand.
+# Secrets belong in the plugin's configuration card, or in an environment variable.
 - insert:
     - id: '{{name}}'
       name: '{{name}}'

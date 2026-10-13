@@ -1,7 +1,7 @@
-# Actions 版本漂移自动上门：dependabot 每周提一个 bump PR，CI 会先替我们跑一遍。
+# Actions version drift comes to us: dependabot opens a bump PR every week and CI runs on it first.
 #
-# 只开 github-actions 生态：本项目的 npm 依赖大半是 DSH 的 rc 版本，放开自动 PR
-# 只会变成噪音，需要时手工升。
+# The github-actions ecosystem only. Most of this project's npm dependencies sit on the host's
+# pre-release line, so automatic PRs there would be pure noise; those get bumped by hand.
 version: 2
 updates:
   - package-ecosystem: github-actions

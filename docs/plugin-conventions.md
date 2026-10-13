@@ -155,6 +155,24 @@ jobs:
 - **Narrowing collides with two redlines that read `package.json`**: put the family prefix on a machine-input line (a matrix value or a `run`), never in a workflow comment; and restore the manifest to its committed state before typecheck / build / test. Intent: a redline judges the repository's declaration, not the temporary narrowed form. Reasoning → [decision: narrowing and the redlines](../.agents/notes/2026-10-12-narrowing-and-redlines.md).
 - **Visibility when the patrol goes red**: a scheduled run's failure mail reaches only whoever last edited the cron, so it cannot be the main notification — a failure must open or update a tracking issue with a **fixed title** (the same failure does not get a fresh comment every time).
 
+### 3.6 The plugin icon
+
+One `icon.svg` at the package root, declared as `"icon": "./icon.svg"`.
+
+- **Canvas 36×36**: `viewBox="0 0 36 36"`, and `width` / `height` agree with it.
+- **Transparent background** — `fill="none"` on `<svg>`, and no rectangle covering the canvas. The host
+  draws the file on its own surface, so a baked-in background shows up as a coloured tile.
+- **The artwork is centred**, with **7–9** of margin on its **tight axis**. A square mark gets the same
+  margin on all four sides; a wide or tall mark is letterboxed — the tight axis holds the margin, the
+  other axis takes whatever centring yields.
+- **Colours are baked.** No `currentColor`, no theme variables, no CSS: the host renders the file as an
+  image, so none of them resolve. Artwork may use its own colours.
+- **Geometry, gradients and filters only.** No scripts, no external references.
+- **An XML comment must not contain a double hyphen** (`--`). The file then stops parsing as an image
+  and the host falls back to its default artwork, **silently**.
+- Accepted formats and the size ceiling are the **host's** limits, not ours — take them from the host's
+  own plugin reference rather than copying them here.
+
 ---
 
 ## 4. Criteria, item by item (cross-repository consistency)

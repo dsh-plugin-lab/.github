@@ -3,20 +3,22 @@ import { describe, expect, it } from 'vitest'
 import { apply, inject, name } from '../src/index.ts'
 
 /**
- * 冒烟测试：只证明「这个包能被导入、入口的形状是对的」。
+ * Smoke test: it only establishes that the package imports and that the entry point has the right
+ * shape.
  *
- * 它**不是**红线。红线是「这个插件的行为不可被破坏」那种断言，随能力一起长出来。
+ * It is **not** a redline. A redline is an assertion that this plugin's behaviour must not break,
+ * and those grow alongside the capability itself.
  */
 describe('entry', () => {
-  it('导出了插件名', () => {
+  it('exports the plugin name', () => {
     expect(name).toBe('{{name}}')
   })
 
-  it('声明了服务列表（可以是空的）', () => {
+  it('declares a service list (which may be empty)', () => {
     expect(Array.isArray(inject)).toBe(true)
   })
 
-  it('apply 可以被调用而不抛错', () => {
+  it('can be applied without throwing', () => {
     expect(() => apply({})).not.toThrow()
   })
 })

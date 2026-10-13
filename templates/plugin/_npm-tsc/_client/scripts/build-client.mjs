@@ -1,43 +1,46 @@
 /**
- * 打包浏览器半体。
+ * Bundle the browser half.
  *
- * 产物必须是 DSH 客户端模块系统的 lazy-CJS factory 形态：
- * 脚本执行时只**注册**工厂，模块体（含副作用）留到首次 require。
+ * The artifact has to be the lazy-CJS factory envelope the host's client module system wants: the
+ * script only **registers** a factory, and the module body (with its side effects) waits for the first
+ * require.
  *
  *     window.__ModuleLoader__.load({ id, factory: (require) => ({ ... }) })
  *
- * 官方在仓库内用 `packages/client/tsdown.client.ts` 的 `clientBundle()` 生成这个信封，
- * 但该预设未发布到 npm（官方 cookbook 明写「a package outside this repository has to
- * reproduce the same output format itself」），所以这里用 esbuild 复现。
+ * Upstream builds this envelope with `clientBundle()` from `packages/client/tsdown.client.ts`, but
+ * that preset is not published to npm (the official cookbook states plainly that "a package outside
+ * this repository has to reproduce the same output format itself"), so esbuild reproduces it here.
  *
- * 两件事必须自己接上：
- * 1. CSS Modules 需要显式 `loader: { '.css': 'local-css' }`，否则 `import css` 拿到 `{}`。
- * 2. esbuild 把 CSS 抽成独立文件，而 DSH 要求样式在 factory 执行时注入
- *    `<style data-plugin="<包名>">` —— HMR 的 `removeOwnedStyles` 按该属性逐字匹配来清理。
+ * Two things have to be wired up by hand:
+ * 1. CSS Modules need an explicit `loader: { '.css': 'local-css' }`, otherwise `import css` yields `{}`.
+ * 2. esbuild extracts CSS into a separate file, but DSH wants the styles injected when the factory
+ *    runs, as `<style data-plugin="<package name>">` — HMR's `removeOwnedStyles` cleans up by matching
+ *    that attribute literally.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { build } from 'esbuild'
 
-// 路径冲突守卫：tsc 把 src/<name>.ts 编译到 lib/<name>.js，rootDir 是 src、outDir 是 lib。
-// 若存在 src/client.ts，它会与本脚本的 outfile 同名 —— 后跑的一方静默覆盖另一方。
-// 这个冲突真实发生过：lib/client.js 被浏览器信封顶掉后，宿主侧 import 拿到信封，
-// DSH 启动即 SyntaxError 崩溃。
+// Path-collision guard: tsc compiles src/<name>.ts to lib/<name>.js with rootDir src and outDir lib.
+// If src/client.ts existed it would claim the same path as this script's outfile, and whichever ran
+// second would silently overwrite the other. That collision really happened: lib/client.js was
+// replaced by the browser envelope, the host-side import picked up the envelope instead, and DSH died
+// on startup with a SyntaxError.
 for (const stale of ['src/client.ts', 'src/client.tsx']) {
   if (existsSync(stale)) {
     throw new Error(
-      `${stale} 与浏览器半体的输出路径 lib/client.js 冲突：请把它改名或移进 src/client/。`,
+      `${stale} collides with the browser half's output path lib/client.js: rename it, or move it into src/client/.`,
     )
   }
 }
 
-/** bundle id 必须等于包名：模块表以它作 key，HMR 也按它清理样式。真源是 package.json 的 name。 */
+/** The bundle id must equal the package name: the module table is keyed by it. Truth is package.json's `name`. */
 const BUNDLE_ID = JSON.parse(readFileSync('package.json', 'utf8')).name
 
-/** 样式标签的 id；前缀必须是包名，便于排查。 */
+/** The style tag id; the prefix must be the package name so it is traceable. */
 const STYLE_TAG_ID = `${BUNDLE_ID}/client.css`
 
-/** 宿主基线模块与同侪包，一律不打包进去。 */
+/** Baseline modules and peer packages the host provides; none of these get bundled. */
 const HOST_PROVIDED = [
   'react',
   'react-dom',
@@ -46,13 +49,13 @@ const HOST_PROVIDED = [
   '@deepseek-ai/*',
 ]
 
-/** 构建期占位符，构建后替换成真正的样式注入代码。 */
+/** Build-time placeholder, replaced after the build with the real style-injection code. */
 const CSS_PLACEHOLDER = '/*__DSB_STYLE_INJECTION__*/'
 
 /**
- * 生成样式注入代码。形状照 `packages/client/tsdown.client.ts:37-56`：
- * 重复注入用 querySelector 挡住，标签同时带 `data-plugin`（HMR 清理用）
- * 与 `data-plugin-css`（模块系统记账用）。
+ * Emit the style-injection code. The shape follows `packages/client/tsdown.client.ts:37-56`: a
+ * querySelector blocks a repeated injection, and the tag carries both `data-plugin` (for HMR cleanup)
+ * and `data-plugin-css` (the module system's bookkeeping).
  */
 function styleInjection(cssText) {
   return [
@@ -94,9 +97,9 @@ const result = await build({
 
 const jsOutput = result.outputFiles.find((file) => file.path.endsWith('.js'))
 const cssOutput = result.outputFiles.find((file) => file.path.endsWith('.css'))
-if (jsOutput === undefined) throw new Error('esbuild 没有产出 JS 文件。')
+if (jsOutput === undefined) throw new Error('esbuild produced no JS file.')
 if (!jsOutput.text.includes(CSS_PLACEHOLDER)) {
-  throw new Error('footer 占位符丢失：esbuild 的 footer 行为变了，请检查构建脚本。')
+  throw new Error('footer placeholder lost: esbuild footer behaviour changed; check this script.')
 }
 
 const cssText = cssOutput?.text ?? ''

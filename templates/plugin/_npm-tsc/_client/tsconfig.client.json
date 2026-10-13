@@ -3,8 +3,9 @@
   "compilerOptions": {
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
-    // 浏览器半体内部以 `.ts` / `.tsx` 后缀互相导入（vitest 与打包器都认这种写法）。
-    // 注意它只在 `emitDeclarationOnly` / `noEmit` 下合法 —— 这个 project 正是前者。
+    // The browser half imports its own files with explicit `.ts` / `.tsx` extensions (both vitest and
+    // the bundler accept that). Note it is only legal under `emitDeclarationOnly` / `noEmit`, and
+    // this project is the former.
     "allowImportingTsExtensions": true,
     "types": [],
     "outDir": "./lib/types",

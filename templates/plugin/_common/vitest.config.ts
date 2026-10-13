@@ -1,14 +1,15 @@
 import { configDefaults, defineConfig } from 'vitest/config'
 
 /**
- * 日常测试配置（`npm test` / `pnpm test`）。
+ * Day-to-day test configuration (`npm test` / `pnpm test`).
  *
- * **契约测试不在这里**：它们打真实上游、要凭据、要配额，只由单独的
- * `vitest.contract.config.ts` 与每周的 `contract.yml` 跑。本仓还没有契约测试，
- * 只先把这条排除留下 —— 免得以后加第一个契约测试时它悄悄混进日常测试，
- * 让「本机绿」变成「要有网络和密钥才绿」。
+ * **Contract tests do not live here.** They hit the real upstream, need credentials and consume quota,
+ * so they run on their own (`vitest.contract.config.ts`, weekly `contract.yml`). This repository has
+ * none yet — the exclusion is here from the start so that the first contract test cannot quietly join
+ * the day-to-day run and turn "green locally" into "green only with a network and a key".
  *
- * `exclude` 取官方默认值再追加：手抄一份官方清单，官方加一项我们就漏一项。
+ * `exclude` starts from the official defaults and appends to them: copying that list by hand means
+ * missing every entry upstream adds later.
  */
 export default defineConfig({
   test: {

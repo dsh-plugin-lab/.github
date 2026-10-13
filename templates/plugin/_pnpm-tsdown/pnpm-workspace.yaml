@@ -1,4 +1,4 @@
-# pnpm 工作区根。只有一个包也要声明 —— 否则 pnpm 把它当「非工作区」目录，
-# 依赖树与安装了 pnpm 的 CI 上的树不同形。
+# pnpm workspace root. Declared even with a single package — otherwise pnpm treats this as a
+# non-workspace directory and the dependency tree stops matching the one CI installs.
 packages:
   - '.'

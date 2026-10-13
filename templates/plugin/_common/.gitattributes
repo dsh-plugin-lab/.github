@@ -1,7 +1,8 @@
-# 换行契约：本仓库统一 LF。Windows 编辑器若写入 CRLF 会在 diff 里产生整文件噪音。
+# Line-ending contract: this repository is LF throughout. A Windows editor writing CRLF turns an
+# otherwise small diff into whole-file noise.
 * text=auto eol=lf
 
-# 二进制产物不做行尾转换
+# Binary artifacts get no line-ending conversion
 *.png binary
 *.jpg binary
 *.ico binary

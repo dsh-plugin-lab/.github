@@ -21,7 +21,7 @@
     "verbatimModuleSyntax": true
   },
   "include": ["src", "test"],
-  // 宿主半边与它的测试：无 DOM、无 JSX。浏览器半边由 tsconfig.client.json 检查，
-  // 它加上 DOM 库与 JSX 变换。
+  // The host half and its tests: no DOM, no JSX. The browser half is checked by
+  // tsconfig.client.json, which adds the DOM library and the JSX transform.
   "exclude": ["src/client"]
 }

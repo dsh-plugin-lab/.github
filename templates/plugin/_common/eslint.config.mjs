@@ -4,8 +4,9 @@ import tseslint from 'typescript-eslint'
 import eslintConfigPrettier from 'eslint-config-prettier'
 
 /**
- * ESLint 与编译器分工：`strict` 那组开关管类型与死代码，这里管编译器不覆盖的那一层
- * （hooks、promise、import 顺序之类）。参数是各仓自己的，不需要跨仓一致。
+ * Division of labour with the compiler: the `strict` switches own types and dead code, ESLint owns
+ * the layer the compiler does not cover (hooks, promises, import order). The parameters are per
+ * repository and need not match across them.
  */
 export default [
   { ignores: ['lib/**', 'node_modules/**'] },
@@ -17,7 +18,7 @@ export default [
     },
   },
   {
-    // 浏览器半体，见 tsconfig.client.json。
+    // The browser half; see tsconfig.client.json.
     files: ['src/client/**/*.{ts,tsx}'],
     languageOptions: {
       globals: { ...globals.browser },
@@ -25,7 +26,8 @@ export default [
   },
   {
     rules: {
-      // `_` 前缀是「有意不用」的既有写法（回调占位、解构剔除某个键）。
+      // A leading `_` marks a binding that is deliberately unused (a callback placeholder, or a key
+      // dropped by destructuring).
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
