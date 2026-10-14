@@ -10,6 +10,9 @@ stays private between you and the maintainers until a fix is published.
 If that button is not available on the repository you are looking at, open an
 issue that contains **no sensitive detail** and ask for a private channel.
 
+Everything that is *not* a security problem — bugs, questions, how to use
+something — belongs in the public tracker; see [SUPPORT.md](SUPPORT.md).
+
 ## What to include
 
 - The repository and the version you tested (the `version` in `package.json`, or

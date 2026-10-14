@@ -3,13 +3,15 @@
 ## Where to ask
 
 Issues are per repository, not per organization — file yours where the code
-lives.
+lives. The organization cannot route a report it never sees.
 
 | What you have | Where it goes |
 |---|---|
-| A bug | Open an issue; the issue forms in every repository ask for the details that are actually needed |
-| A feature request | Same repository, feature-request form |
-| A question, or anything the forms do not fit | Open a blank issue in the repository the question is about |
+| A bug | The repository the code lives in, bug-report form |
+| A feature request | The same repository, feature-request form |
+| A question, or anything the forms do not fit | A blank issue in the repository the question is about |
+| A vulnerability | **Not** the issue tracker — see [SECURITY.md](SECURITY.md) |
+| A conduct problem | Not an issue — see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
 
 ## Before you open one
 
@@ -17,13 +19,8 @@ lives.
 - Read the repository's `README` and, where it exists, `docs/ARCHITECTURE.md`.
 - Reproduce on the latest release.
 
-## What a useful report contains
+## What to put in it
 
-- The repository and the version you tested.
-- Your environment: operating system and runtime version.
-- Steps to reproduce, the result you expected, the result you got.
-- The full error text, with credentials removed.
-
-## Security issues
-
-Do not use the issue tracker — see [SECURITY.md](SECURITY.md).
+The repository's issue form asks for the specifics it needs; gather them first.
+The full list of what a report should carry — versions, install method, other
+plugins in the profile — is in [CONTRIBUTING.md](CONTRIBUTING.md).

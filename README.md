@@ -1,34 +1,59 @@
 # Organization-level files
 
-This is not the organization profile — that is [profile/README.md](profile/README.md).
-This repository holds the files GitHub resolves for **every** repository in the
-organization that does not ship its own.
+GitHub reads a handful of files from fixed locations only, and a repository that
+has one of its own always wins. This repository holds the ones that do not need to
+live in every repository — so a repository created later inherits them **with no
+commit anywhere**. The consequence matters more than the table below: **a change
+here changes what those repositories show, and appears in none of their diffs.**
+
+## Start here
+
+| You are | Go to |
+|---|---|
+| Contributing to a plugin | [CONTRIBUTING.md](CONTRIBUTING.md) — and that repository's own `AGENTS.md` |
+| Reporting a problem, or asking a question | [SUPPORT.md](SUPPORT.md) |
+| Reporting a vulnerability | [SECURITY.md](SECURITY.md) |
+| Working **in this repository** | [AGENTS.md](AGENTS.md) — the commands and the rules that are specific to it |
+| Deciding whether something is a defect across the organization | [docs/plugin-conventions.md](docs/plugin-conventions.md) ([中文](docs/plugin-conventions_zh.md)) |
+| Looking at the organization's public page | [profile/README.md](profile/README.md) |
 
 ## What it holds
 
-| File | Applies to |
+Two groups, and they behave differently.
+
+**Resolved by GitHub from here into repositories that lack their own:**
+
+| File | Notes |
 |---|---|
-| `SECURITY.md` | repositories without their own; the private-reporting entry is enabled per repository |
-| `CODE_OF_CONDUCT.md` | as above |
-| `SUPPORT.md` | as above |
-| `CONTRIBUTING.md` | as above; the shared contribution rules for the organization |
-| `PULL_REQUEST_TEMPLATE.md` | as above |
-| `.github/ISSUE_TEMPLATE/*.yml` | as above; **must live here**, not at a repository root |
-| `.github/release-drafter.yml` | repositories without a config of their own |
-| `profile/README.md` | the organization profile page; not a fallback mechanism |
-| `docs/plugin-conventions.md` | maintainers: which files live here, which each repository keeps, and their shapes and criteria ([中文](docs/plugin-conventions_zh.md)) |
-| `assets/badges.md` | maintainers: copy-ready badge snippets — the official powered-by-dsh badge, the static/dynamic badge shapes, and the door-front skeleton |
-| `templates/plugin/` | maintainers: the skeleton for a **new** plugin repository, laid down by `scripts/scaffold.mjs`; it is a **seeder, not a synchroniser** — nothing here is ever written back into an existing repository |
+| `SECURITY.md` | the private-reporting entry is enabled per repository, not from this file |
+| `CODE_OF_CONDUCT.md` | |
+| `SUPPORT.md` | |
+| `CONTRIBUTING.md` | the shared contribution rules |
+| `PULL_REQUEST_TEMPLATE.md` | |
+| `.github/ISSUE_TEMPLATE/*.yml` | **must** live here, not at a repository root — at a root it does nothing, silently |
+| `.github/release-drafter.yml` | the draft's shared shape; a repository whose labels differ ships its own |
 
-Prose is English wherever it is rendered outside this repository: the templates, the generator, and
-the files in the table above. Chinese is used for the maintainer-facing layer only — `AGENTS.md`, the
-Chinese half of the criteria document, and `.agents/notes/`.
+**Maintainer-facing, read only by people working on the organization:**
 
-Nothing here is copied into those repositories: a repository that has a file of the
-same name always wins. The corollary matters more than the table — **a change here
-changes what those repositories show, with no commit in any of them**.
+| File | What it is |
+|---|---|
+| [AGENTS.md](AGENTS.md) | the commands, the global rules and the traps of **this** repository |
+| [docs/plugin-conventions.md](docs/plugin-conventions.md) | the cross-repository criteria, item by item, with what deliberately differs ([中文](docs/plugin-conventions_zh.md)) |
+| [assets/badges.md](assets/badges.md) | copy-ready badge snippets; a store, not a live document |
+| [templates/plugin/](templates/plugin/) + [scripts/scaffold.mjs](scripts/scaffold.mjs) | the skeleton for a **new** plugin repository. A **seeder, not a synchroniser** — nothing here is ever written back into an existing repository |
+| [.agents/notes/](.agents/notes/) | why a decision was made, and what it ruled out |
 
-## What it deliberately does not do
+## Language
+
+Prose that renders **outside** this repository is English: the templates, the
+generator, and every file in the first table. Chinese is used in the
+maintainer-facing layer only — `AGENTS.md`, the Chinese half of the criteria
+document, and `.agents/notes/`.
+
+The one exception is by necessity: GitHub has no mechanism for localized
+community files, so the organization profile keeps both languages as two files.
+
+## What this repository deliberately does not do
 
 - **No release and no version.** There is no `package.json` and no lockfile; nothing
   is published from here. There is also no license, because nothing is distributed
@@ -38,18 +63,3 @@ changes what those repositories show, with no commit in any of them**.
   adds no dependency: it is plain Node with `node:` built-ins only.
 - **No repository-specific content.** What one plugin does, how it builds, and what it
   deliberately will not do stay in that plugin's own repository.
-
-## Conventions
-
-Which files live at the organization level, which each repository keeps for itself,
-and the invariants they share — including what is deliberately **not** shared — is
-documented in [docs/plugin-conventions.md](docs/plugin-conventions.md)
-([中文](docs/plugin-conventions_zh.md)). The reasoning, trade-offs and post-mortems
-behind those decisions are recorded in [.agents/notes/](.agents/notes/).
-
-The map of the maintainer-facing documents is in [AGENTS.md](AGENTS.md).
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). For a security problem do not use the public
-tracker — see [SECURITY.md](SECURITY.md).

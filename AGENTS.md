@@ -64,11 +64,22 @@
 
 ## 文档地图
 
-- 跨仓判据（双语）→ [docs/plugin-conventions.md](docs/plugin-conventions.md) · [中文](docs/plugin-conventions_zh.md)
-- 徽章模板（存放，非活件）→ [assets/badges.md](assets/badges.md)：官方 powered-by-dsh 与自造徽章的拷贝即用片段、占位符形状、门面排骨架、链接写法规则
-- 新仓骨架（播种器，**不回写任何已存在的仓**）→ [templates/plugin/](templates/plugin/) + [scripts/scaffold.mjs](scripts/scaffold.mjs)
-- 决策与依据 → [.agents/notes/](.agents/notes/)（结构见其 [README.md](.agents/notes/README.md)）
-- 组织主页 → [profile/README.md](profile/README.md) · [中文](profile/README_zh.md)
-- 贡献规则 → [CONTRIBUTING.md](CONTRIBUTING.md)
-- A 类社区健康文件 → [SECURITY.md](SECURITY.md) · [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) · [SUPPORT.md](SUPPORT.md) · [PULL_REQUEST_TEMPLATE.md](PULL_REQUEST_TEMPLATE.md)
-- 复用的工作流配置 → [.github/release-drafter.yml](.github/release-drafter.yml)
+每份文档只有一个 home，各存一类。**改某件事之前先确认它的 home 在哪**，不要就地另起一份。
+
+| 文件 | 它的身份 | 谁读它 |
+|---|---|---|
+| [README.md](README.md) | 本仓入口：GitHub 为什么会把这些文件放这儿 + **身份路由表** | 任何打开本仓的人 |
+| [docs/plugin-conventions.md](docs/plugin-conventions.md) · [中文](docs/plugin-conventions_zh.md) | **跨仓判据**。第 4 节是要动手的那节，最后一列写明由谁判 | 判「这是不是缺陷」的人；被注入进插件仓的 agent |
+| [AGENTS.md](AGENTS.md) | **本仓特有**：命令、全局规则、活跃坑 | 在本仓干活的维护者与 agent |
+| [.agents/notes/](.agents/notes/)（结构见其 [README.md](.agents/notes/README.md)） | 决策与依据 —— 「为什么这样定」 | 要动判据的人 |
+| [assets/badges.md](assets/badges.md) | 徽章拷贝即用片段（**存放件，非活件**） | 改插件门面的人 |
+| [templates/plugin/](templates/plugin/) + [scripts/scaffold.mjs](scripts/scaffold.mjs) | 新仓骨架播种器，**不回写任何已存在的仓** | 建新仓的人 |
+| [profile/README.md](profile/README.md) · [中文](profile/README_zh.md) | 组织主页（渲染在那儿，链接必须绝对 URL） | 组织访客 |
+| [CONTRIBUTING.md](CONTRIBUTING.md) · [SUPPORT.md](SUPPORT.md) · [SECURITY.md](SECURITY.md) · [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) · [PULL_REQUEST_TEMPLATE.md](PULL_REQUEST_TEMPLATE.md) | **回退件**，渲染进没有同名文件的插件仓 | 贡献者与使用者 |
+| [.github/release-drafter.yml](.github/release-drafter.yml) | 草稿的共享**形状**；标签映射逐仓自定 | 维护草稿的人 |
+
+**三条不许越界的边界**（越界即缺陷）：
+
+- 判据只住 `plugin-conventions.md`；论证只住 notes。**两边互链，不互抄。**
+- `CONTRIBUTING.md` 渲染进各仓，因此它**只放贡献者要遵守的东西**；跨仓判据在那里只给指针。
+- 本仓的展示面（`README.md`、回退件、模板）**一律英文**；中文只在维护者层。

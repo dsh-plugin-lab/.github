@@ -2,9 +2,8 @@
 
 [English](plugin-conventions.md) | [中文](plugin-conventions_zh.md)
 
-**What this document is for**: which things belong at the organization level, which each repository keeps for itself, and — for the latter — the **standard shapes** and the **criteria, item by item**.
-**Readers**: whoever creates a new plugin repository (copy the shapes) and maintainers (to check against).
-**Not its job**: a repository's own business and design → that repository's `AGENTS.md` and `docs/ARCHITECTURE.md`.
+**Who this is for**: you are looking at a repository in this organization and you need to know whether something is a **defect** — a pull request that changes the version, a release that reads the wrong thing, two repositories that stopped looking alike. **Section 4 is the operative part**: it is short, and its last column says which script judges each rule. Start there.
+**Who this is not for**: how to work in one repository (that repository's `AGENTS.md`), how to contribute (this organization's `CONTRIBUTING.md`), how a release actually runs (that repository's `docs/PUBLISHING.md`), how to check this organization repository (its `AGENTS.md`).
 **What stays out**: arguments, trade-offs and post-mortems → [.agents/notes/](../.agents/notes/). This document keeps criteria, one line of intent each, reopening conditions, how to check, and pointers.
 
 To decide where a file belongs, ask three questions in order:
@@ -60,7 +59,14 @@ checks, which is what accepts a template edit. Reasoning → [decision: the scaf
 
 ## 3. Standard shapes for what each repository keeps
 
-Only shapes below — no values that drift (version numbers, counts, line names). A new repository copies the shapes; an existing one is checked against them.
+Only shapes below — no values that drift (version numbers, counts, line names).
+
+**For a new repository, the shape is not copied from here**: the scaffold seeds it
+(`node scripts/scaffold.mjs <dir>`, then `--verify` runs the generated repository's
+own checks). Read this section to know **why** the generated file looks the way it
+does and **where it may legitimately differ** — not to transcribe it.
+**For an existing repository, this is the reference**: what the shape is, and the
+parts that are not negotiable.
 
 ### 3.1 The CI closing job
 
@@ -214,6 +220,11 @@ Four things that are easy to miss, and all four fail **silently**:
 
 ## 4. Criteria, item by item (cross-repository consistency)
 
+**This is the section to act on.** The last column is not prose: it names the file
+or script that judges the rule, so "is this actually enforced?" has an answer
+rather than an opinion. Everything in sections 1–3 explains *why* a row below
+holds; nothing here needs to be read in order.
+
 The three tiers:
 
 | Tier | Meaning |
@@ -269,3 +280,16 @@ while this says the self-consistent target may be the lower line. Repositories s
 - **Shapes** → read the criteria here; do not copy values from here.
 - **A rule cannot live only in prose** → whatever can become an assertion becomes one (redline tests, `check:*` scripts); prose keeps pointers only.
 - **Contrastive descriptions ("A has it, B does not") go stale fastest** → they depend on both sides at once; before acting, re-check the original source.
+
+---
+
+## Where this document sits
+
+| You are | Read |
+|---|---|
+| Judging whether something is a defect here | **section 4**, and the file named in its last column |
+| Building a **new** plugin repository | the scaffold, not this document: `node scripts/scaffold.mjs <dir> --verify` |
+| Working **in** one plugin repository | that repository's `AGENTS.md` |
+| Running a release in one plugin repository | that repository's `docs/PUBLISHING.md` |
+| Contributing code | this organization's [CONTRIBUTING.md](../CONTRIBUTING.md) |
+| Maintaining **this** organization repository | its [AGENTS.md](../AGENTS.md) |
