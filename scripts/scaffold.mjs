@@ -65,6 +65,26 @@ const RECIPE = {
   buildScript: 'tsdown',
   typecheckScript: 'tsc -p tsconfig.json && tsc -p tsconfig.client.json',
   typecheckHostOnly: 'tsc -p tsconfig.json',
+  // The environment name the npm Trusted Publisher is configured with. It has to match that
+  // one-for-one or the OIDC claims do not match — and a per-repository value, which is why it is
+  // named rather than assumed.
+  environment: 'release',
+  // The check chain between installing and publishing. Its shape is deliberately not a template's
+  // business: what a repository proves before it ships is its own call. What the flow guarantees
+  // downstream of it does not vary, and that is what release.yml states.
+  prePublishChecks: [
+    '      - name: Install locked dependencies',
+    '        run: pnpm install --frozen-lockfile --config.node-linker=hoisted',
+    '',
+    '      - run: pnpm run typecheck',
+    '',
+    '      # Order is fixed: lib/ is a build artifact, and a test that reads it cannot pass before',
+    '      # it exists.',
+    '      - name: Build (produces lib/)',
+    '        run: pnpm run build',
+    '',
+    '      - run: pnpm run test',
+  ].join('\n'),
 }
 
 /**
@@ -222,6 +242,8 @@ function buildContext(opts) {
     builderDeps: RECIPE.builderDeps,
     buildScript: RECIPE.buildScript,
     typecheckScript: hostOnly ? RECIPE.typecheckHostOnly : RECIPE.typecheckScript,
+    environment: RECIPE.environment,
+    prePublishChecks: RECIPE.prePublishChecks,
     clientPeerDeps,
     clientDevDeps,
     clientExport,

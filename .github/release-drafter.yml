@@ -1,11 +1,20 @@
 # Release Drafter config: appends entries to a draft Release, categorized by PR labels.
 #
 # It does NOT touch versions, create tags, or publish — the publish decision stays with a human.
-# Each repo has its own publish entry point (usually .github/workflows/release.yml, manual dispatch).
-# The two do not replace each other.
+# Each repo has its own publish entry point (usually .github/workflows/release.yml).
 #
 # Lives at the root of the org .github repo; inherited by all repos under the org
 # that do not have their own release-drafter.yml.
+#
+# Two layers, and they are not equally binding:
+#   - The **shape** below is the shared part: the draft's name, the change line, the escaping, the
+#     version resolver. Repositories do not re-decide these.
+#   - The **category → label mapping** is a default, not a standard. Labels are repository
+#     metadata and genuinely differ; a repository whose labels differ ships its own config file.
+#     Measured 2026-10-14: `refactor` and `skip-changelog` exist in one repository of four.
+#
+# What is negotiable is therefore the category list. What is not: `tag-template` below, because the
+# publish flow reads it — see the note there.
 
 name-template: 'v$RESOLVED_VERSION'
 # tag-template deliberately does NOT use v$RESOLVED_VERSION:
@@ -13,8 +22,12 @@ name-template: 'v$RESOLVED_VERSION'
 # released, a draft holding that tag makes the check hit the draft and take the "already exists,
 # skip" branch — the package gets published but the Release page is missing, and nothing errors.
 # A rolling name ("next") never collides with v<version>.
+#
+# This one is **not** negotiable the way the categories are: the publish flow reads the draft by this
+# exact tag. Changing it is not a config edit, it is a change to every release flow that reads it.
 tag-template: 'next'
 
+# Default categories. A repository whose labels differ overrides this whole file; see the header.
 categories:
   - title: 'Features'
     labels:
@@ -41,6 +54,7 @@ change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
 change-title-escapes: '\<*_&'
 
 # Dependency bumps and other "merged but invisible to users" changes get skip-changelog.
+# Like the categories above, the label name is a repository's own choice.
 pre-exclude:
   - title: 'skip-changelog'
     labels:
@@ -48,12 +62,16 @@ pre-exclude:
 
 # Direct pushes without a PR: the draft is allowed to be empty; no error, no block.
 autolabeler: []
+# The last paragraph is the contract with the publish flow: it reads the draft as the release body and
+# deletes that line, so **the wording is free to change but the words "Release Drafter" must stay** —
+# they are how the flow tells "read a drafter draft" from "read some other, stale draft". Keep it one
+# line: the flow strips by line.
 template: |
   ## Changes
 
   $CHANGES
 
-  **Auto-generated draft by Release Drafter — NOT published.** Actual publishing goes through each repo's publish entry point (usually a manual dispatch); the release body is finalized against that version's artifact consistency check.
+  **Draft by Release Drafter — not published.**
 version-resolver:
   major:
     labels:
