@@ -1,8 +1,13 @@
 # Day-to-day CI: every push to main and every PR runs the type check, the build and the full test suite.
 #
-# A frozen install ({{install}}) rather than a plain one: it installs strictly from the lockfile and
-# **fails outright** when the lockfile and package.json disagree — which is exactly what this is here
-# to catch. The criterion: CI installs are always frozen and never resolve new versions over the network.
+# A frozen install rather than a plain one: it installs strictly from the lockfile and **fails
+# outright** when the lockfile and package.json disagree — which is exactly what this is here to
+# catch. The criterion: CI installs are always frozen and never resolve new versions over the network.
+#
+# `--config.node-linker=hoisted` is not an optimisation, it is a correctness switch: pnpm's symlink
+# linker cannot resolve the browser half's peer web packages in this tree, and the failure surfaces
+# as a test that cannot see its own dependencies. The local hook borrows the same flag for the same
+# reason.
 name: CI
 
 on:
@@ -19,25 +24,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-{{pmSetup}}
+      # pnpm has to be installed before setup-node, or `cache: pnpm` cannot find the store.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
       - uses: actions/setup-node@v7
         with:
           # .node-version is the single source for the baseline, so CI cannot drift from a laptop.
           node-version-file: .node-version
-          cache: {{pm}}
+          cache: pnpm
 
-      - run: {{install}}
+      - run: pnpm install --frozen-lockfile --config.node-linker=hoisted
 
-      - run: {{run}} typecheck
+      - run: pnpm run typecheck
 
-      - run: {{run}} build
+      - run: pnpm run build
 
-      - run: {{run}} test
+      - run: pnpm run test
 
-      - run: {{run}} lint
+      - run: pnpm run lint
 
       - name: Format check
-        run: {{run}} format:check
+        run: pnpm run format:check
 
   # The closing job — the ruleset's required_status_checks names this one status ("CI Success"), so
   # jobs inside this file can come and go without touching the ruleset. Three things cannot move:

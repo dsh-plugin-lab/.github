@@ -8,9 +8,9 @@
 ## Commands
 
 ```shell
-{{run}} check          # typecheck + build + test
-{{run}} lint           # ESLint
-{{run}} format:check   # formatting
+pnpm run check          # typecheck + build + test
+pnpm run lint           # ESLint
+pnpm run format:check   # formatting
 ```
 
 ## Document map

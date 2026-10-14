@@ -55,7 +55,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "{{run}} typecheck && {{run}} build && {{run}} test"
+    "check": "pnpm run typecheck && pnpm run build && pnpm run test"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.4"{{clientPeerDeps}}

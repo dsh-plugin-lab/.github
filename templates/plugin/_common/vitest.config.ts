@@ -1,7 +1,7 @@
 import { configDefaults, defineConfig } from 'vitest/config'
 
 /**
- * Day-to-day test configuration (`npm test` / `pnpm test`).
+ * Day-to-day test configuration (`pnpm test`).
  *
  * **Contract tests do not live here.** They hit the real upstream, need credentials and consume quota,
  * so they run on their own (`vitest.contract.config.ts`, weekly `contract.yml`). This repository has

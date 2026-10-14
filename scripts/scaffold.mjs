@@ -14,7 +14,6 @@
  *   node scripts/scaffold.mjs check <repo directory>...
  *
  * Options:
- *   --profile <npm-tsc|pnpm-tsdown>  Build / package-manager recipe; defaults to npm-tsc
  *   --name <package name>            Defaults to the target directory's base name
  *   --display-name <name>            Defaults to the package name
  *   --description <one line>         Defaults to a TODO
@@ -49,39 +48,23 @@ import { fileURLToPath } from 'node:url'
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const TEMPLATES = path.join(HERE, '..', 'templates', 'plugin')
 
-/** Recipes. Editing one changes the starting point of every new repository that uses it. */
-const PROFILES = {
-  'npm-tsc': {
-    pm: 'npm',
-    // Two installs, deliberately: CI installs frozen (the lockfile is committed by then), while a
-    // freshly seeded directory has no lockfile yet and must install unfrozen to produce one.
-    installFrozen: 'npm ci',
-    installFresh: 'npm install --no-audit --no-fund',
-    run: 'npm run',
-    pmSetup: '',
-    builderDeps: ',\n    "esbuild": "^0.28.2"',
-    buildScript: 'tsc && tsc -p tsconfig.client.json && node scripts/build-client.mjs',
-    buildScriptHostOnly: 'tsc',
-    typecheck: 'tsc --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.test.json',
-    typecheckHostOnly: 'tsc --noEmit && tsc -p tsconfig.test.json',
-  },
-  'pnpm-tsdown': {
-    pm: 'pnpm',
-    installFrozen: 'pnpm install --frozen-lockfile --config.node-linker=hoisted',
-    installFresh: 'pnpm install --config.node-linker=hoisted',
-    run: 'pnpm run',
-    pmSetup:
-      '      # pnpm has to be installed before setup-node, or `cache: pnpm` cannot find the store.\n' +
-      '      - uses: pnpm/action-setup@v4\n' +
-      '        with:\n' +
-      '          version: 11\n',
-    builderDeps:
-      ',\n    "@vitest/coverage-v8": "^4.1.11",\n    "lightningcss": "^1.33.0",\n    "tsdown": "^0.22.2"',
-    buildScript: 'tsdown',
-    buildScriptHostOnly: 'tsdown',
-    typecheck: 'tsc -p tsconfig.json && tsc -p tsconfig.client.json',
-    typecheckHostOnly: 'tsc -p tsconfig.json',
-  },
+/**
+ * The recipe. One, not a choice: the family standardises on pnpm (see the package manager section of
+ * the plugin conventions), and `pnpm-lock.yaml` is therefore the only lockfile a seeded repository has.
+ *
+ * Two installs, deliberately: CI installs frozen (the lockfile is committed by then), while a freshly
+ * seeded directory has no lockfile yet and must install unfrozen to produce one.
+ */
+const RECIPE = {
+  // `--config.node-linker=hoisted` is a correctness switch, not an optimisation: see ci.yml's header.
+  installFrozen: 'pnpm install --frozen-lockfile --config.node-linker=hoisted',
+  installFresh: 'pnpm install --config.node-linker=hoisted',
+  run: 'pnpm run',
+  builderDeps:
+    ',\n    "@vitest/coverage-v8": "^4.1.11",\n    "lightningcss": "^1.33.0",\n    "tsdown": "^0.22.2"',
+  buildScript: 'tsdown',
+  typecheckScript: 'tsc -p tsconfig.json && tsc -p tsconfig.client.json',
+  typecheckHostOnly: 'tsc -p tsconfig.json',
 }
 
 /**
@@ -107,12 +90,11 @@ const VERIFY_STEPS = ['check', 'lint', 'format:check']
  *   different files the moment the template's prose was translated. Aligning the existing
  *   repositories is its own decision, not something a seeder does behind their backs.
  * - `ci.yml`, `release.yml`, `compat.yml` are byte-identical copies too, but each is either
- *   token-rendered per recipe or (release / compat) not generated at all here.
+ *   token-rendered per repository or (release / compat) not generated at all here.
  *
  * Measured 2026-10-12 over the reference repositories: `.node-version` and
- * `.github/workflows/release-drafter.yml` match across all of them;
- * `.prettierignore` matches across repositories on the **same** package manager, so both recipe
- * variants are accepted when comparing.
+ * `.github/workflows/release-drafter.yml` match across all of them; `.prettierignore` matches
+ * repositories on pnpm.
  */
 const IDENTITY_FILES = ['.node-version', '.github/workflows/release-drafter.yml', '.prettierignore']
 
@@ -181,7 +163,6 @@ function leftoverTokens(content) {
 }
 
 function buildContext(opts) {
-  const profile = PROFILES[opts.profile]
   const hostOnly = opts.hostOnly
   const client = !hostOnly
 
@@ -238,13 +219,9 @@ function buildContext(opts) {
     owner: opts.owner,
     version: opts.version,
     dshRange: opts.dshRange,
-    pm: profile.pm,
-    install: profile.installFrozen,
-    run: profile.run,
-    pmSetup: profile.pmSetup,
-    builderDeps: profile.builderDeps,
-    buildScript: hostOnly ? profile.buildScriptHostOnly : profile.buildScript,
-    typecheckScript: hostOnly ? profile.typecheckHostOnly : profile.typecheck,
+    builderDeps: RECIPE.builderDeps,
+    buildScript: RECIPE.buildScript,
+    typecheckScript: hostOnly ? RECIPE.typecheckHostOnly : RECIPE.typecheckScript,
     clientPeerDeps,
     clientDevDeps,
     clientExport,
@@ -255,36 +232,29 @@ function buildContext(opts) {
 /**
  * Marker for "belongs to the browser half only".
  *
- * Why a subdirectory **inside** each layer rather than one more top-level layer: the two slices have
- * to stay orthogonal. With a top-level `_client` layer, `--host-only` would mean "skip a top-level
- * layer", but `tsconfig.client.json` and `build-client.mjs` also differ **by package manager** — they
- * belong to the client slice *and* the recipe slice at once, and two-dimensional slicing does not fit
- * a one-dimensional layer sequence. Under `_client/` within each layer, both dimensions fit.
+ * A **slice, not a layer**: the two halves have to stay orthogonal, so it lives inside the tree rather
+ * than as a second top-level directory. With one recipe there is nothing for a top-level layer to
+ * slice against anymore — `--host-only` now means "drop the `_client/` files", and nothing else.
  */
 const CLIENT_MARKER = '_client/'
 
-/** Pure function: decide which files get written. Reads the template tree only; never touches the target. */
+/**
+ * Pure function: decide which files get written. Reads the template tree only; never touches the target.
+ *
+ * One layer, so there is no override decision to make and therefore no way for a file to come from two
+ * places: the previous guard for that case was unreachable once the second recipe went away.
+ */
 function plan(opts) {
-  const layers = ['_common', `_${opts.profile}`]
+  const layer = '_common'
+  const root = path.join(TEMPLATES, layer)
+  if (!fs.existsSync(root)) die(`template layer does not exist: templates/plugin/${layer}`, 2)
 
   const files = []
-  const seen = new Map()
-  for (const layer of layers) {
-    const root = path.join(TEMPLATES, layer)
-    if (!fs.existsSync(root)) die(`template layer does not exist: templates/plugin/${layer}`, 2)
-    for (const raw of walk(root)) {
-      const clientOnly = raw.startsWith(CLIENT_MARKER)
-      if (clientOnly && opts.hostOnly) continue
-      const rel = clientOnly ? raw.slice(CLIENT_MARKER.length) : raw
-      if (seen.has(rel)) {
-        die(
-          `template layer collision: ${rel} comes from both ${seen.get(rel)} and ${layer}/${raw} — ` +
-            `layering may only add, never override (an override silently decides which one wins)`,
-        )
-      }
-      seen.set(rel, `${layer}/${raw}`)
-      files.push({ layer, rel, src: path.join(root, raw) })
-    }
+  for (const raw of walk(root)) {
+    const clientOnly = raw.startsWith(CLIENT_MARKER)
+    if (clientOnly && opts.hostOnly) continue
+    const rel = clientOnly ? raw.slice(CLIENT_MARKER.length) : raw
+    files.push({ layer, rel, src: path.join(root, raw) })
   }
   return files
 }
@@ -370,20 +340,11 @@ function write(files, destDir, ctx, { force }) {
 function check(repos) {
   if (repos.length === 0) die('check needs one or more repository directories', 1)
 
-  // Variants: one file may have several sources across layers (one per package manager), and matching
-  // any of them counts as identical.
-  const variants = new Map()
-  for (const layer of fs.readdirSync(TEMPLATES).sort()) {
-    const root = path.join(TEMPLATES, layer)
-    if (!fs.statSync(root).isDirectory()) continue
-    for (const rel of walk(root)) {
-      if (!IDENTITY_FILES.includes(rel)) continue
-      if (!variants.has(rel)) variants.set(rel, [])
-      variants.get(rel).push({ layer, src: path.join(root, rel) })
-    }
-  }
+  // One source per file: a single layer means there is no variant to match against.
+  const sources = new Map()
+  for (const rel of IDENTITY_FILES) sources.set(rel, path.join(TEMPLATES, '_common', rel))
 
-  const missing = IDENTITY_FILES.filter((rel) => !variants.has(rel))
+  const missing = IDENTITY_FILES.filter((rel) => !fs.existsSync(sources.get(rel)))
   if (missing.length > 0) {
     die(`these files should be byte-identical but are missing from the templates: ${missing.join(', ')}`, 2)
   }
@@ -399,13 +360,10 @@ function check(repos) {
         bad += 1
         continue
       }
-      const got = sha256(target)
-      const hit = variants.get(rel).find((v) => sha256(v.src) === got)
-      if (hit) {
-        process.stdout.write(`  OK       ${rel}  (matches ${hit.layer})\n`)
+      if (sha256(target) === sha256(sources.get(rel))) {
+        process.stdout.write(`  OK       ${rel}\n`)
       } else {
-        const layers = variants.get(rel).map((v) => v.layer).join(' / ')
-        process.stdout.write(`  DIFF     ${rel}  (differs from ${layers})\n`)
+        process.stdout.write(`  DIFF     ${rel}\n`)
         bad += 1
       }
     }
@@ -425,7 +383,6 @@ function usage() {
       `  node scripts/scaffold.mjs <directory> [options]\n` +
       `  node scripts/scaffold.mjs check <repo directory>...\n\n` +
       `Options:\n` +
-      `  --profile <npm-tsc|pnpm-tsdown>  defaults to npm-tsc\n` +
       `  --name / --display-name / --description / --author / --license-holder\n` +
       `  --owner / --version / --dsh-range\n` +
       `  --host-only     skip the browser half\n` +
@@ -441,7 +398,6 @@ function parseCliArgs(argv) {
     args: argv,
     allowPositionals: true,
     options: {
-      profile: { type: 'string', default: 'npm-tsc' },
       name: { type: 'string' },
       'display-name': { type: 'string' },
       description: { type: 'string' },
@@ -506,9 +462,6 @@ function main() {
     usage()
     die('no target directory given', 1)
   }
-  if (!(values.profile in PROFILES)) {
-    die(`unknown recipe: ${values.profile} (available: ${Object.keys(PROFILES).join(' / ')})`, 1)
-  }
 
   const target = path.resolve(dest)
   const name = values.name ?? path.basename(target)
@@ -516,7 +469,6 @@ function main() {
   const year = new Date().getFullYear()
 
   const opts = {
-    profile: values.profile,
     name,
     displayName: values['display-name'] ?? name,
     description: values.description ?? 'TODO: one line on what this plugin does.',
@@ -531,9 +483,7 @@ function main() {
   const files = plan(opts)
 
   if (values['dry-run']) {
-    process.stdout.write(
-      `would write ${files.length} files to ${target} (recipe ${opts.profile}):\n`,
-    )
+    process.stdout.write(`would write ${files.length} files to ${target}:\n`)
     for (const file of files) process.stdout.write(`  ${file.rel}\n`)
     return
   }
@@ -541,13 +491,12 @@ function main() {
   write(files, target, buildContext(opts), { force: values.force })
 
   // `--verify` implies `--install`: there is nothing to check without a dependency tree.
-  const profile = PROFILES[opts.profile]
   if (values.install || values.verify) {
-    run(profile.installFresh, target, 'install failed — no lockfile was produced, and CI goes red')
+    run(RECIPE.installFresh, target, 'install failed — no lockfile was produced, and CI goes red')
 
     if (values.verify) {
       for (const step of VERIFY_STEPS) {
-        run(`${profile.run} ${step}`, target, `${step} failed on the generated repository`)
+        run(`${RECIPE.run} ${step}`, target, `${step} failed on the generated repository`)
       }
       process.stdout.write(`\nverified: ${VERIFY_STEPS.join(', ')} all green\n`)
     }
@@ -560,7 +509,7 @@ function main() {
       `  2. Write the "What it offers" section of README.md, and every TODO in AGENTS.md.\n` +
       `  3. Adjust the dependency list to the host services actually used — the starting set is\n` +
       `     unverified, and none of it was validated against this plugin.\n` +
-      `  4. Install and run \`${PROFILES[opts.profile].run} check\`.\n`,
+      `  4. Install and run \`${RECIPE.run} check\`.\n`,
   )
 }
 

@@ -44,11 +44,11 @@ TODO: what can be configured, where it is stored, and the defaults.
 ## Development
 
 ```shell
-{{install}}
-{{run}} typecheck
-{{run}} build
-{{run}} test
-{{run}} check
+pnpm install --config.node-linker=hoisted
+pnpm run typecheck
+pnpm run build
+pnpm run test
+pnpm run check
 ```
 
 ## License
