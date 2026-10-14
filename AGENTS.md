@@ -19,16 +19,23 @@
 - **notes 不追改** —— 记录当时的事实，不随上层文档更新；事实性变化就地改，决策反转才新写一条
   并交叉引用。规则见 [.agents/notes/AGENTS.md](.agents/notes/AGENTS.md)。
 - **YAML 里值含 `: `（冒号加空格）一律加引号** —— 否则被解析成映射。
+- **模板与脚本散文一律英文** —— 生成的仓是给外部看的。本仓根目录的展示文件（`README.md`、
+  `CONTRIBUTING.md`、`SECURITY.md` 等）也是英文；只有服务维护者的中文（`AGENTS.md`、
+  判据文档的中文版、notes）才用中文。
+- **`git diff --check` 报的「行尾空白」先怀疑 CRLF** —— 本仓 `.gitattributes` 写的是
+  `* text=auto eol=lf`，索引里若还留着 CRLF，改一行就会让整文件冒出假告警。
 
 ## 常用命令
 
 - 链接校验：`python <maintenance-flow>/check-markdown-links.py <本仓> --fragments --refs`
 - 换行校验：`git diff --check`
-- 铺新仓骨架：`node scripts/scaffold.mjs <空目录> [--profile npm-tsc|pnpm-tsdown] [--host-only]`
+- 铺新仓骨架：`node scripts/scaffold.mjs <空目录> [--host-only]`
   （先 `--dry-run` 看清单；目标非空会被拒绝，这是有意的 —— 它只给空目录用）
 - **改过 `templates/` 就跑一遍 `--verify`**：它装依赖并跑生成仓自己的 CI 检查
   （`check` / `lint` / `format:check`）。这是模板唯一的验收手段 —— 本仓没有 CI，
   模板坏了不会有别的东西报出来
+- **模板改了判据要留反向控制**：把生成仓的某个文件改坏一处，确认对应守卫**真的会红**。
+  「现在这条绿」和「这条判据有牙齿」是两件事，后者要单独证
 - 核对逐字相同件：`node scripts/scaffold.mjs check <仓目录>...` —— 模板那一份与仓内同名文件
   做 SHA-256 比对。**不一致不必然是缺陷**（分号、锁文件名本来就是逐仓参数），
   它报的是「知道它不同」，不是「强行一样」

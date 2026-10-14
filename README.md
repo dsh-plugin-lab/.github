@@ -20,6 +20,10 @@ organization that does not ship its own.
 | `assets/badges.md` | maintainers: copy-ready badge snippets — the official powered-by-dsh badge, the static/dynamic badge shapes, and the door-front skeleton |
 | `templates/plugin/` | maintainers: the skeleton for a **new** plugin repository, laid down by `scripts/scaffold.mjs`; it is a **seeder, not a synchroniser** — nothing here is ever written back into an existing repository |
 
+Prose is English wherever it is rendered outside this repository: the templates, the generator, and
+the files in the table above. Chinese is used for the maintainer-facing layer only — `AGENTS.md`, the
+Chinese half of the criteria document, and `.agents/notes/`.
+
 Nothing here is copied into those repositories: a repository that has a file of the
 same name always wins. The corollary matters more than the table — **a change here
 changes what those repositories show, with no commit in any of them**.
