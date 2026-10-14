@@ -3,8 +3,27 @@
 This file holds the rules that are the same for **every** repository in this
 organization. What is specific to one repository — what it does, how to build it,
 what it deliberately will not do — lives in that repository's own `AGENTS.md`,
-`README.md` and `docs/ARCHITECTURE.md`. Read those first. Where they disagree with
-this file, the repository wins.
+`README.md` and `docs/ARCHITECTURE.md`. Read those first.
+
+**Which one wins.** For *how a repository is worked in*, the repository wins: its
+commands, its test layout and its release procedure are its own. For *what must be
+true across every repository in this organization*, it does not: those invariants
+are listed in [docs/plugin-conventions.md](docs/plugin-conventions.md), and a
+repository that disagrees with one is wrong, not an exception.
+
+## Where things are written down
+
+The organization repository keeps these things. Each has exactly one home, so this
+file points rather than repeats.
+
+| You want to know | Read |
+|---|---|
+| How to build, test and work in **this** repository | that repository's `AGENTS.md` |
+| What is the same across every repository, and what must be true | [docs/plugin-conventions.md](docs/plugin-conventions.md) ([中文](docs/plugin-conventions_zh.md)) |
+| Why a decision was made, and what it ruled out | that repository's `.agents/notes/` |
+| How a release actually happens | that repository's `docs/PUBLISHING.md` |
+| Where the shared files come from | [the organization repository](https://github.com/dsh-plugin-lab/.github) |
+| Badge snippets for a README | [assets/badges.md](https://github.com/dsh-plugin-lab/.github/blob/main/assets/badges.md) |
 
 ## Before you open an issue
 
@@ -27,6 +46,9 @@ A useful report contains:
 | What you expected | |
 | How to reproduce | the smallest sequence of steps that shows the problem |
 | Other plugins | anything else installed in the same profile — compatibility problems often come from conflicts |
+
+The issue forms ask for these individually; they are listed here so you can gather
+them before you start.
 
 ## Before you propose a feature
 
@@ -81,6 +103,12 @@ label your pull request before merging:
 - `skip-changelog` — merged but invisible to users (dependency bumps and the
   like); excluded from every category.
 
+Labels are repository metadata, so **which labels exist is each repository's own
+business** — the ones above are the common set, not a fixed list. The draft's
+*shape* (its name, how a change is rendered into a line) is shared; that part, and
+the rule that the release body comes from that draft, are the organization-level
+invariants in [docs/plugin-conventions.md](docs/plugin-conventions.md).
+
 The draft summarises **pull requests**, not commits: a commit pushed straight to
 the default branch is invisible to it. That is a trade-off, not a defect.
 
@@ -97,9 +125,3 @@ revoke it first, then write the report.
 ## Security issues
 
 Do not use the public issue tracker — see [SECURITY.md](SECURITY.md).
-
-## Repository conventions
-
-Which files live at the organization level, which each repository keeps for
-itself, and the invariants they share — including what is deliberately **not**
-shared — is documented in [docs/plugin-conventions.md](docs/plugin-conventions.md).

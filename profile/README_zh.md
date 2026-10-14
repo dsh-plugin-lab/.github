@@ -1,6 +1,6 @@
 # dsh-plugin-lab
 
-[English](README.md) | [中文](README_zh.md)
+[English](https://github.com/dsh-plugin-lab/.github/blob/main/profile/README.md) | [中文](https://github.com/dsh-plugin-lab/.github/blob/main/profile/README_zh.md)
 
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的插件集合。
 
@@ -21,9 +21,10 @@ dsh plugin --profile <profile> add <包名>
 
 ## [dsh-plugin-lab/.github](https://github.com/dsh-plugin-lab/.github) 里有什么
 
-| 文件 | |
+| 想找 | 文件 |
 |---|---|
-| [plugin-conventions.md](https://github.com/dsh-plugin-lab/.github/blob/main/docs/plugin-conventions.md) | 哪些文件放组织级、各仓自持哪些形状、共享哪些不变量 |
-| [CONTRIBUTING.md](https://github.com/dsh-plugin-lab/.github/blob/main/CONTRIBUTING.md) | 怎么贡献 |
-| [SECURITY.md](https://github.com/dsh-plugin-lab/.github/blob/main/SECURITY.md) | 怎么私密报告漏洞 |
-| [templates/plugin](https://github.com/dsh-plugin-lab/.github/tree/main/templates/plugin) | 脚手架：给新插件仓铺骨架 |
+| 怎么贡献 | [CONTRIBUTING.md](https://github.com/dsh-plugin-lab/.github/blob/main/CONTRIBUTING.md) |
+| 提问或报 bug 去哪 | [SUPPORT.md](https://github.com/dsh-plugin-lab/.github/blob/main/SUPPORT.md) |
+| 怎么私密报告漏洞 | [SECURITY.md](https://github.com/dsh-plugin-lab/.github/blob/main/SECURITY.md) |
+| 各插件仓共享哪些规矩 | [plugin-conventions.md](https://github.com/dsh-plugin-lab/.github/blob/main/docs/plugin-conventions.md) ([中文](https://github.com/dsh-plugin-lab/.github/blob/main/docs/plugin-conventions_zh.md)) |
+| 哪些文件放组织级、为什么 | [README.md](https://github.com/dsh-plugin-lab/.github/blob/main/README.md) |

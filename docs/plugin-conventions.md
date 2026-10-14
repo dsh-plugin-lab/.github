@@ -2,9 +2,8 @@
 
 [English](plugin-conventions.md) | [中文](plugin-conventions_zh.md)
 
-**What this document is for**: which things belong at the organization level, which each repository keeps for itself, and — for the latter — the **standard shapes** and the **criteria, item by item**.
-**Readers**: whoever creates a new plugin repository (copy the shapes) and maintainers (to check against).
-**Not its job**: a repository's own business and design → that repository's `AGENTS.md` and `docs/ARCHITECTURE.md`.
+**Who this is for**: you are looking at a repository in this organization and you need to know whether something is a **defect** — a pull request that changes the version, a release that reads the wrong thing, two repositories that stopped looking alike. **Section 4 is the operative part**: it is short, and its last column says which script judges each rule. Start there.
+**Who this is not for**: how to work in one repository (that repository's `AGENTS.md`), how to contribute (this organization's `CONTRIBUTING.md`), how a release actually runs (that repository's `docs/PUBLISHING.md`), how to check this organization repository (its `AGENTS.md`).
 **What stays out**: arguments, trade-offs and post-mortems → [.agents/notes/](../.agents/notes/). This document keeps criteria, one line of intent each, reopening conditions, how to check, and pointers.
 
 To decide where a file belongs, ask three questions in order:
@@ -60,7 +59,14 @@ checks, which is what accepts a template edit. Reasoning → [decision: the scaf
 
 ## 3. Standard shapes for what each repository keeps
 
-Only shapes below — no values that drift (version numbers, counts, line names). A new repository copies the shapes; an existing one is checked against them.
+Only shapes below — no values that drift (version numbers, counts, line names).
+
+**For a new repository, the shape is not copied from here**: the scaffold seeds it
+(`node scripts/scaffold.mjs <dir>`, then `--verify` runs the generated repository's
+own checks). Read this section to know **why** the generated file looks the way it
+does and **where it may legitimately differ** — not to transcribe it.
+**For an existing repository, this is the reference**: what the shape is, and the
+parts that are not negotiable.
 
 ### 3.1 The CI closing job
 
@@ -111,7 +117,6 @@ updates:
 
 ### 3.3 Draft releases
 
-The **config** lives in the organization repository (`.github/release-drafter.yml`; a repository with no config of its own falls back to it).
 The **workflow** is one per repository, byte-identical:
 
 ```yaml
@@ -135,10 +140,26 @@ jobs:
 ```
 
 - **The runner must be pinned to ubuntu**. Intent: on a windows runner the action cannot find its config file, the draft comes out silently empty and **nothing errors** (the action's major version follows upstream).
-- **The draft's tag name is decoupled from the version number** — the draft takes a fixed name and does not take `v<version>`. Intent: otherwise the "has this version been released?" check collides with the draft, takes the "already exists, skip" branch, and the package ships while the Release page stays empty — again **with no error**.
 - The draft summarises **pull requests**, not commits: a commit pushed straight to `main` is invisible to it. Trade-off, not a defect.
 
-### 3.4 TypeScript and the test skeleton
+The **config** splits into two layers that do not land in the same place:
+
+- The **shape** is shared (in the organization repository's `.github/release-drafter.yml`, which a repository without a config of its own falls back to): the draft's name, the change line `- $TITLE (#$NUMBER) @$AUTHOR`, the escaping set, the version resolver. **Repositories do not re-decide these.**
+- The **category → label mapping is per repository**. Labels are **repository metadata** and genuinely differ — measured across four repositories, `refactor` and `skip-changelog` exist in **one** of them. The organization copy is a **default, not a standard**: a repository whose labels differ ships a config of its own.
+
+**`tag-template: 'next'` is not part of the negotiable layer** (unlike the categories): the publish flow reads the draft by that tag. Changing it is not a config edit, it is a change to every flow that reads it.
+
+### 3.4 The package manager and the build
+
+The family has **exactly one package manager**: pnpm, with `pnpm-lock.yaml` as the only lockfile.
+
+- **`pnpm-workspace.yaml` declares the single-package workspace.** Intent: without it pnpm treats this as a non-workspace directory and the dependency tree stops matching the one CI installs.
+- **Installs carry `--config.node-linker=hoisted`.** Intent: pnpm's symlink linker cannot resolve the browser half's peer packages in this tree, and the failure surfaces as a test that cannot see its own dependencies.
+- **`pnpm/action-setup` comes before `actions/setup-node` in CI.** Intent: the other order leaves `cache: pnpm` without a store.
+- **The local hook runs `pnpm exec`, not `npx`,** and carries `--config.verify-deps-before-run=false`. Intent: it borrows what the tree already has and downloads nothing.
+- **The builder is `tsdown`**, configured twice in `tsdown.config.ts` (host half ESM, browser half a CJS envelope), with the browser half's CSS Modules as a plugin of that same file.
+
+### 3.5 TypeScript and the test skeleton
 
 - One tsconfig for the host half and one for the browser half; **two** vitest configs kept apart, one day-to-day and one for contracts.
 - The day-to-day config **explicitly excludes** the contract cases; the contract config runs on its own (no parallelism, relaxed timeout).
@@ -147,16 +168,17 @@ jobs:
 - CI installs always run in frozen mode, never resolving new versions over the network.
 - **One pair of files per maintainable directory**: `AGENTS.md` says how to work there, `README.md` says what is there and what to change; a fact has exactly one home, and cross-file mentions are pointers only.
 
-### 3.5 Release-state guards and the compatibility patrol
+### 3.6 Release-state guards and the compatibility patrol
 
-- **Release-state invariants** become a `check:release` script, run by the release flow **before** publish.
+- **Release-state invariants** become a `check:release` script, run by the release flow **before** publish. The scaffold template ships one, so a new repository satisfies this criterion the day it is created; a repository **appends** its own assertions after it and drops none of these.
+- **The release noise guard** (`scripts/release-guard.mjs`) judges whether a change set can change what is on npm. **By exclusion**: an unrecognised path counts as an artifact — missing a release (someone answers again) beats blocking one that should have happened.
 - **The compatibility patrol** watches whether upstream moved; a local commit cannot change its verdict, so it runs weekly and **is not attached to `push`**.
 - A swap script clearing leftovers must clear **both lockfiles** (`package-lock.json` and `pnpm-lock.yaml`). Intent: a stale lock makes the install fail outright, and **after a failed install the tree stays on the old versions while every later step goes green**.
 - **When the declaration is a union of families** (separated by `||`), testing **any** family requires narrowing the declaration to that family first — **not only the lower one**. Intent: under a union the install produces a **mixed tree**, and the "move to some line" step tests a line that is not the one named. Mechanism → [evidence: the installer picks the family by `latest`](../.agents/notes/2026-10-12-installer-picks-latest-family.md).
 - **Narrowing collides with two redlines that read `package.json`**: put the family prefix on a machine-input line (a matrix value or a `run`), never in a workflow comment; and restore the manifest to its committed state before typecheck / build / test. Intent: a redline judges the repository's declaration, not the temporary narrowed form. Reasoning → [decision: narrowing and the redlines](../.agents/notes/2026-10-12-narrowing-and-redlines.md).
 - **Visibility when the patrol goes red**: a scheduled run's failure mail reaches only whoever last edited the cron, so it cannot be the main notification — a failure must open or update a tracking issue with a **fixed title** (the same failure does not get a fresh comment every time).
 
-### 3.6 The plugin icon
+### 3.7 The plugin icon
 
 One `icon.svg` at the package root, declared as `"icon": "./icon.svg"`.
 
@@ -174,9 +196,34 @@ One `icon.svg` at the package root, declared as `"icon": "./icon.svg"`.
 - Accepted formats and the size ceiling are the **host's** limits, not ours — take them from the host's
   own plugin reference rather than copying them here.
 
+### 3.8 The release flow
+
+The implementation is **each repository's own** (the template ships a reference implementation meeting the four below). Those four are the behavioural floor:
+
+| Floor | Criterion |
+|---|---|
+| **Both entry points, manual and tag** | A tag trigger carries its own gate: the tag name must equal `v` plus the manifest version |
+| **The release body reads the Drafter draft** | Falls back to `--generate-notes` when the draft cannot be read or is empty, and **must warn when it cannot be read** |
+| **The draft is retired afterwards** | The one whose tag does not start with `v`; no formal release is touched |
+| **npm publishing goes through OIDC** | No token at any point; the cost is one Trusted Publisher configured on npm |
+
+Four things that are easy to miss, and all four fail **silently**:
+
+- **On a tag trigger the guard's baseline must exclude the tag being released.** Otherwise `describe` resolves to that tag itself, the range is empty, and a perfectly normal release is judged as "nothing to release".
+- **The "only from main" check must be guarded by `github.event_name`.** Without it `github.ref` is `refs/tags/...` on a tag trigger and every tag-triggered release goes red.
+- **Check that the Release does not already exist before creating it.** Without that idempotency a re-run collides with the existing tag and goes red.
+- **Clean the draft body by matching the action's own line, not the full wording of the notice.** That wording belongs to the organization template; copying it verbatim is a sed that fails silently the moment it changes.
+
+**Left to each repository, not required to match**: the check chain before publish, the environment name, whether a GitHub App token is needed to push to the default branch, the retry policy for creating a Release. Their prerequisites (labels, environments, secrets, rulesets, the npm backend) **are not files**, so no template can carry them — each repository's `docs/PUBLISHING.md` states its own.
+
 ---
 
 ## 4. Criteria, item by item (cross-repository consistency)
+
+**This is the section to act on.** The last column is not prose: it names the file
+or script that judges the rule, so "is this actually enforced?" has an answer
+rather than an opinion. Everything in sections 1–3 explains *why* a row below
+holds; nothing here needs to be read in order.
 
 The three tiers:
 
@@ -189,11 +236,15 @@ The three tiers:
 | Rule | Tier | Where it lands |
 |---|---|---|
 | The lockfile's `resolved` must point at the official registry | Must agree | a redline assertion per repository (the count is computed, never copied into a document) |
+| **One package manager only: pnpm**, with `pnpm-lock.yaml` as the sole lockfile | Must agree | stated in the template; a migrated repository's `.prettierignore` falls into place under `scaffold check` |
 | A missing peer → fail; missing dev only → warn and skip | Should agree | shared decision logic (**default fail**); which host line it follows is per repository |
 | peer and dev versions must agree | Must agree | a redline assertion per repository |
 | The four compiler switches and ESLint each own their layer | Should agree | redlines per repository guard that the switches exist; **the switch values stay in `tsconfig.json`**, tool parameters are per repository |
-| Release-state invariants | Must agree | `check:release` per repository; a pure host plugin may be exempt from the `files` item, **the host compatibility range must not be** |
-| The release flow must **not** bump the version | Must agree | a redline assertion per repository, **with a negative control**. Bumping is its own step before a release |
+| Release-state invariants | Must agree | `check:release` per repository (the template ships one; repositories **append** and drop nothing); a pure host plugin may be exempt from the `files` item, **the host compatibility range must not be** |
+| The release flow must **not** bump the version | Must agree | `findVersionWrites` inside `check:release`, **with a negative control**. Bumping is its own step before a release |
+| **Both manual and tag can trigger**, and on a tag trigger the baseline excludes the tag being released | Must agree | an assertion in each repository's release flow |
+| **The body reads the Drafter draft** and **the draft is retired afterwards**, with a **warning when it cannot be read** | Must agree | an assertion in each repository's release flow. Without the warning, "the release succeeded but the body came from the fallback" is a silent failure |
+| **npm publishing goes through OIDC**, no token at any point | Must agree | each repository's release flow; the prerequisite is a Trusted Publisher on npm (done by a human, no template can carry it) |
 | Before releasing, confirm the commit to release is already on the **remote** | Must agree | the "before you release" section of each repository's `docs/PUBLISHING.md` |
 | A release must produce git-side artifacts of the **same shape** (tag shape, Release exists, pre-release marked) | Must agree | an assertion in each repository's release flow. The tag name is read by **a machine** (the guard uses `git describe --match`), so it is not pure aesthetics |
 | The host compatibility range and the peer range must be **self-consistent** | Must agree | redlines per repository. Across repositories only the **floor** is compared (it is comparable); **the upper bound's shape is per repository** |
@@ -203,6 +254,7 @@ The three tiers:
 | Diagnostic steps (for example dumping the credential declaration at release time) | — | they are materialisation: **local to the workflow**, not extracted |
 | Path-conflict assertions | — | **not written**: equivalent protection already exists, and a second copy is duplication |
 | How CSS is injected, whether a stylesheet exists | Capability optional | per repository: the rule itself does not apply |
+| The drafter's **category → label mapping** | Should agree | the organization copy is a **default**; labels are repository metadata and are set per repository (measured across four repositories, `refactor` and `skip-changelog` exist in one of them) |
 | A client `inject` lists real dependencies only | Must agree | use the official bundled validator rather than writing prose |
 | How links are written: **same repository → relative path**; **another repository (same organization or not) → absolute URL**; always `[]()`, never `<URL>` and never a bare URL. A URL that is a **value** rather than a reference goes in inline code | Must agree | each repository's `AGENTS.md`; files rendered on the organization profile page are the exception (their links must be absolute — see that repository's `AGENTS.md`) |
 
@@ -228,3 +280,16 @@ while this says the self-consistent target may be the lower line. Repositories s
 - **Shapes** → read the criteria here; do not copy values from here.
 - **A rule cannot live only in prose** → whatever can become an assertion becomes one (redline tests, `check:*` scripts); prose keeps pointers only.
 - **Contrastive descriptions ("A has it, B does not") go stale fastest** → they depend on both sides at once; before acting, re-check the original source.
+
+---
+
+## Where this document sits
+
+| You are | Read |
+|---|---|
+| Judging whether something is a defect here | **section 4**, and the file named in its last column |
+| Building a **new** plugin repository | the scaffold, not this document: `node scripts/scaffold.mjs <dir> --verify` |
+| Working **in** one plugin repository | that repository's `AGENTS.md` |
+| Running a release in one plugin repository | that repository's `docs/PUBLISHING.md` |
+| Contributing code | this organization's [CONTRIBUTING.md](../CONTRIBUTING.md) |
+| Maintaining **this** organization repository | its [AGENTS.md](../AGENTS.md) |

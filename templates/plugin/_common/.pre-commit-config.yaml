@@ -1,7 +1,6 @@
 # Local commit hook: second-scale checks only, autofixing what it can and blocking only what it cannot.
 #
-# This repository is the one of the family that uses pnpm (pnpm-lock.yaml is the only lockfile), so
-# this runs `pnpm exec` rather than `npx`: it walks the same tree CI installs
+# This runs `pnpm exec` rather than `npx`: it walks the same tree CI installs
 # (pnpm install --frozen-lockfile --config.node-linker=hoisted) and **downloads nothing**.
 #
 # `--config.verify-deps-before-run=false` is mandatory: pnpm verifies the dependency tree before exec

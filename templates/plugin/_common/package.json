@@ -55,7 +55,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "{{run}} typecheck && {{run}} build && {{run}} test"
+    "check:release": "node scripts/check-release.mjs",
+    "check": "pnpm run typecheck && pnpm run build && pnpm run test && pnpm run check:release"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.4"{{clientPeerDeps}}
