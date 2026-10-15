@@ -11,7 +11,7 @@
 | [dsh-ds-balance](https://github.com/dsh-plugin-lab/dsh-ds-balance) | 侧栏显示 DeepSeek 账户余额 |
 | [dsh-zhihu-search](https://github.com/dsh-plugin-lab/dsh-zhihu-search) | 知乎站内搜索 / 全网搜索 / 知乎直答 |
 | [dsh-workbuddy-bridge](https://github.com/dsh-plugin-lab/dsh-workbuddy-bridge) | 把 WorkBuddy 桌面 App 的模型接入 DSH |
-| [dsh-plugin-debugging](https://github.com/dsh-plugin-lab/dsh-plugin-debugging) | 给正在跑的 DSH 实例排障的只读工具箱 |
+| [dsh-plugin-debugging](https://github.com/dsh-plugin-lab/dsh-plugin-debugging) | DSH 插件运行时诊断：区分实时生效、重启和热重载。 |
 
 ## 安装
 
