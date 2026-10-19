@@ -69,7 +69,7 @@
 | 文件 | 它的身份 | 谁读它 |
 |---|---|---|
 | [README.md](README.md) | 本仓入口：GitHub 为什么会把这些文件放这儿 + **身份路由表** | 任何打开本仓的人 |
-| [docs/plugin-conventions.md](docs/plugin-conventions.md) · [中文](docs/plugin-conventions_zh.md) | **跨仓判据**。第 4 节是要动手的那节，最后一列写明由谁判 | 判「这是不是缺陷」的人；被注入进插件仓的 agent |
+| [docs/plugin-conventions.md](docs/plugin-conventions.md) · [中文](docs/plugin-conventions_zh.md) | **跨仓判据**。第 5 节是要动手的那节，最后一列写明由谁判；第 4 节写插件发出去的包必须带什么 | 判「这是不是缺陷」的人；被注入进插件仓的 agent |
 | [AGENTS.md](AGENTS.md) | **本仓特有**：命令、全局规则、活跃坑 | 在本仓干活的维护者与 agent |
 | [.agents/notes/](.agents/notes/)（结构见其 [README.md](.agents/notes/README.md)） | 决策与依据 —— 「为什么这样定」 | 要动判据的人 |
 | [assets/badges.md](assets/badges.md) | 徽章拷贝即用片段（**存放件，非活件**） | 改插件门面的人 |
