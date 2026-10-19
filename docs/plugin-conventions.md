@@ -376,6 +376,23 @@ Two further obligations, both about the artifact rather than the repository:
 - **Publishing is the only way to change any of the above.** Editing a manifest in the repository changes
   nothing that a reader sees until a release ships.
 
+### What the package must not carry
+
+The obligation above is about what the market reads. There is a mirror obligation about what nobody
+reads: **images that only the README shows do not belong in the published package.**
+
+- **They live in the repository and the README references them relatively** (`assets/x.png`). Both
+  surfaces that render a README — the repository page and the npm page — resolve that path; the package
+  does not need to contain the file for either of them to work.
+- **`files` does not list `assets/`.** A plugin whose facade images ship in the tarball makes every
+  consumer download screenshots to get code, and makes every reader of the index pay to fetch them. The
+  size of the harm is not the point; the direction is.
+- **This does not apply to `icon.svg`**, which the market does read (see the table above) and which is
+  therefore shipped.
+- **Adding a runtime asset to `assets/` still ships it**, because the exclusion is a list of specific
+  files, not of the directory — a plugin that needs a file at runtime keeps it working while a new
+  screenshot never silently enters the package.
+
 **Field semantics live elsewhere, on purpose**: which JSON key, which path, what the reader does with an
 unknown member → the market's [market-format.md](https://github.com/dsh-plugin-lab/market/blob/main/docs/market-format.md).
 This section states the **obligation**; that document is the **contract**. Neither copies the other.
@@ -399,6 +416,7 @@ The three tiers:
 | Rule | Tier | Where it lands |
 |---|---|---|
 | A published package carries the four inputs of §4 | Must agree | `check:release` per repository (it asserts what the tarball and manifest contain); the market's diagnostics make an omission visible |
+| A published package does **not** carry the images only the README shows: they live in the repository and are referenced relatively | Must agree | a redline assertion per repository — the exclusion entries present, the README using relative paths, the runtime assets still in the package |
 | A merged version reaches npm | Must agree | the post-release check in each repository's `docs/PUBLISHING.md`; detected org-wide by the market's drift report |
 | Every declared host family is judged by the patrol | Must agree | `scripts/check-declaration.mjs` per repository, printing a count per line |
 | The lockfile's `resolved` must point at the official registry | Must agree | a redline assertion per repository (the count is computed, never copied into a document) |
