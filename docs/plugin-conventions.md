@@ -19,7 +19,7 @@ Two layers, and a rule only applies to the layer it is about.
 
 | Kind | What it produces | Which sections apply |
 |---|---|---|
-| **Plugin repository** (`dsh-zhihu-search`, `dsh-ds-balance`, `dsh-plugin-debugging`, `dsh-workbuddy-bridge`) | one npm package, which is also a DSH bundle | all of them |
+| **Plugin repository** — one per plugin | one npm package, which is also a DSH bundle | all of them |
 | **Organization repository** (`dsh-plugin-lab/.github`) | nothing is published; it supplies fallback files and seeds new repositories | §1, §2, and the hygiene rows of §5 |
 | **Market** (`dsh-plugin-lab/market`) | a generated index served from GitHub Pages; no package, no version | §1, §2, §4 as *consumer*, and the hygiene rows of §5 |
 
@@ -78,12 +78,10 @@ copy, held together by **shape**, not by bytes.
 
 - **Intent**: one edit in the organization would otherwise change every repository at once — invisibly,
   since it appears in no repository's diff — and would cost a layer of cross-repository debugging.
-- **Byte-identity is the exception, not the rule.** Measured across the four plugin repositories, only
-  `.github/workflows/release-drafter.yml` is a single identical file. `ci.yml`, `release.yml` and
-  `compat.yml` are **four distinct files each**: same shape and same ordering, with per-repository
-  parameters (job matrices, extra legs, repository-specific steps). The authoritative list of which
-  files must be byte-identical is `scripts/scaffold.mjs` (`IDENTITY_FILES`), not prose — it already
-  excludes those three, and it says so in a comment.
+- **Byte-identity is the exception, not the rule.** Only the draft-release workflow is required to be
+  identical; `ci.yml`, `release.yml` and `compat.yml` are held together by **shape**, with
+  per-repository parameters (job matrices, extra legs, repository-specific steps). Which files are even
+  candidates is `IDENTITY_FILES` in `scripts/scaffold.mjs` — not prose, and not this document.
 - **Reopening condition**: six or more plugin repositories, or a workflow that grows real branching
   logic and per-repository parameters.
 - Reasoning and the rejected alternatives → [decision: workflow copies are not extracted](../.agents/notes/2026-10-12-workflow-copies-not-extracted.md).
@@ -201,9 +199,8 @@ The **config** splits into two layers that do not land in the same place:
   `- $TITLE (#$NUMBER) @$AUTHOR`, the escaping set, the version resolver. **Repositories do not
   re-decide these.**
 - The **category → label mapping is per repository**. Labels are **repository metadata** and genuinely
-  differ — measured across four repositories, `refactor` and `skip-changelog` exist in **one** of them.
-  The organization copy is a **default, not a standard**: a repository whose labels differ ships a config
-  of its own.
+  differ. The organization copy is a **default, not a standard**: a repository whose labels differ ships
+  a config of its own.
 
 **`tag-template: 'next'` is not part of the negotiable layer** (unlike the categories): the publish flow
 reads the draft by that tag. Changing it is not a config edit, it is a change to every flow that reads
@@ -226,9 +223,9 @@ else, because there is nothing else to clear.
   Intent: it borrows what the tree already has and downloads nothing.
 - **The builder is per repository** (§3.9). The scaffold ships `tsdown` with two configurations in
   `tsdown.config.ts` (host half ESM, browser half a CJS envelope, the browser half's CSS Modules as a
-  plugin of that file); three of the four existing repositories instead run
-  `tsc && tsc -p tsconfig.client.json && node scripts/build-client.mjs`. Both satisfy the criteria; the
-  scaffold's choice is the one a new repository starts from.
+  plugin of that file); a repository may instead run the compiler directly and build the browser half
+  with a script. Both satisfy the criteria; the scaffold's choice is the one a new repository starts
+  from.
 
 ### 3.5 TypeScript and the test skeleton
 
@@ -285,11 +282,10 @@ One `icon.svg` at the package root, declared as `"icon": "./icon.svg"`, and ship
   the host draws the file on its own surface, so a baked-in background shows up as a coloured tile.
 - **Judge the rendered geometry, not the attribute values.** A rectangle is "covering the canvas" only
   after every enclosing `transform` is applied, and a `<rect>` inside `<defs>` (a `clipPath`, a `mask`, a
-  gradient) paints nothing at all. Both traps are live: `dsh-workbuddy-bridge`'s icon carries a
-  `width="280" height="280"` rectangle that is a **clip path**, and an equally large gradient plate that
-  a `translate(7 7) scale(22/280)` group lands at `7..29` — inset, rounded, and fully compliant, because
-  the canvas margin stays transparent. Grepping for `<rect>` and judging by its numbers gets this icon
-  wrong; read the group it sits in.
+  gradient) paints nothing at all. Both traps are live: a large `width`/`height` rectangle may be a
+  **clip path**, and a plate may sit inside a group whose `transform` scales and translates it so that
+  it lands inside the margin — inset, rounded, and compliant, because the canvas edge stays transparent.
+  Grepping for `<rect>` and judging by its numbers gets such an icon wrong; read the group it sits in.
 - **A plate that is part of the mark is allowed**, provided it is inset and rounded and the artwork sits
   on top of it — that is what the margin rule below implies. What is forbidden is the full-bleed
   square-cornered rectangle, which reads as a background box rather than as a mark.
@@ -344,14 +340,18 @@ gap between "merged" and "published" is invisible from inside the repository.
 
 Same shape, different parameters or counts. None of these is a defect on its own; §5 is what must agree.
 
-| What | Variation across the four | Why it is allowed |
-|---|---|---|
-| Builder | `tsdown` in one; `tsc` + `build-client.mjs` in three | both produce the host half and the browser half; the scaffold ships `tsdown` |
-| `tsconfig` files | three in three repositories (host, client, test), two in one | a test config is added only when tests are compiled separately |
-| `vitest` configs | two where contract tests exist, one where they do not | the contract config exists to run them apart |
-| `compat.yml` | four distinct files: different legs, different targets | the declared families differ per repository's history |
-| `ci.yml` / `release.yml` | four distinct files each | per-repository jobs, matrices and steps |
-| `release-drafter.yml` | identical in all four | required to be (§2) |
+| What may differ | Why it is allowed |
+|---|---|
+| Builder: `tsdown`, or the compiler plus a browser-half script | both produce the host half and the browser half; the scaffold ships `tsdown` |
+| Number of `tsconfig` files: one per compilation target | a test config is added only when tests are compiled separately |
+| Number of `vitest` configs: two where contract tests exist, one where they do not | the contract config exists to run them apart |
+| `compat.yml`: legs, targets, blocking versus record-only | the declared families differ per repository's history |
+| `ci.yml` / `release.yml`: jobs, matrices, steps | nothing cross-repository reads them but the closing-job rule |
+| **Not** the draft-release workflow | it must be identical (§2) |
+
+**Do not record the current values here.** How many of each, and which builder a given repository uses,
+are facts that change without this document — read them from the repository, or compare with
+`scaffold check`. What is recorded above is the **category** each difference falls into.
 
 ---
 
@@ -413,7 +413,7 @@ The three tiers:
 | **npm publishing goes through OIDC**, no token at any point | Must agree | each repository's release flow; the prerequisite is a Trusted Publisher on npm (done by a human, no template can carry it) |
 | Before releasing, confirm the commit to release is already on the **remote** | Must agree | the "before you release" section of each repository's `docs/PUBLISHING.md` |
 | A release must produce git-side artifacts of the **same shape** (tag shape, Release exists, pre-release marked) | Must agree | an assertion in each repository's release flow. The tag name is read by **a machine** (the guard uses `git describe --match`), so it is not pure aesthetics |
-| The host compatibility declaration must be **self-consistent**, and the **whole string** is comparable across repositories | Must agree | redlines per repository (self-consistency); the string itself is compared by reading each published manifest — all four currently declare the identical union, and that is a fact to re-measure, not a value to copy here |
+| The host compatibility declaration must be **self-consistent**, and the **whole string** is comparable across repositories | Must agree | redlines per repository (self-consistency); the string itself is compared by reading each published manifest. Whether the strings agree today is a fact to re-measure, never a value to copy here |
 | The criterion for a dependency's category is "**our relationship to it**": `import type` only → `devDependencies`; **consuming a service it provides** → `peerDependencies` | Must agree | each repository's `AGENTS.md`. When the criterion and the current state disagree, the next person deletes it by the rule |
 | The tier of TypeScript's strict switches (`strict` / indexed access / optional properties) | Should agree | the **process** is shared: before enabling any switch, count the sites with the **real config** (not a CLI override), and enabling two at once must be tested separately; **the parameters are per repository**, with no cross-repository snapshot |
 | Patrol items that "record but do not block" | Must agree | they must carry a reason, or a green run hides a real problem |
