@@ -15,6 +15,19 @@ Plugins for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
 
 ## Installation
 
+### From the plugin market
+
+Open **Plugins**, enable **Custom plugin markets**, then add this index source under **Discover**:
+
+```text
+https://dsh-plugin-lab.github.io/market/index.json
+```
+
+Everything listed above is installable from there. The index is built in
+[dsh-plugin-lab/market](https://github.com/dsh-plugin-lab/market).
+
+### From the command line
+
 ```shell
 dsh plugin --profile <profile> add <package-name>
 ```
