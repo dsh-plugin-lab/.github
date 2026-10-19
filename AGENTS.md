@@ -83,3 +83,7 @@
 - 判据只住 `plugin-conventions.md`；论证只住 notes。**两边互链，不互抄。**
 - `CONTRIBUTING.md` 渲染进各仓，因此它**只放贡献者要遵守的东西**；跨仓判据在那里只给指针。
 - 本仓的展示面（`README.md`、回退件、模板）**一律英文**；中文只在维护者层。
+
+**本仓不管什么**（免得在这里白找一遍）：插件清单与市场索引属
+[dsh-plugin-lab/market](https://github.com/dsh-plugin-lab/market)，插件代码与发布属各插件仓。
+本仓只管组织级文件、跨仓判据与新仓骨架；`README.md` 的 Start-here 表是意图路由，只给指针，不收内容。

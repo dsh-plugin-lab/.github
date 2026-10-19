@@ -16,6 +16,7 @@ here changes what those repositories show, and appears in none of their diffs.**
 | Working **in this repository** | [AGENTS.md](AGENTS.md) — the commands and the rules that are specific to it |
 | Deciding whether something is a defect across the organization | [docs/plugin-conventions.md](docs/plugin-conventions.md) ([中文](docs/plugin-conventions_zh.md)) |
 | Looking at the organization's public page | [profile/README.md](profile/README.md) |
+| Browsing or installing the plugins themselves | [dsh-plugin-lab/market](https://github.com/dsh-plugin-lab/market) — the plugin market index |
 
 ## What it holds
 
