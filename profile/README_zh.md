@@ -15,6 +15,19 @@
 
 ## 安装
 
+### 从插件市场安装
+
+打开 **插件**，启用 **自定义插件市场**，然后在 **发现** 里添加这个索引源：
+
+```text
+https://dsh-plugin-lab.github.io/market/index.json
+```
+
+上面列出的插件都能在那里装。索引由
+[dsh-plugin-lab/market](https://github.com/dsh-plugin-lab/market) 生成。
+
+### 从命令行安装
+
 ```shell
 dsh plugin --profile <profile> add <包名>
 ```
