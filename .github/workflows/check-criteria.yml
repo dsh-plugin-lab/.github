@@ -52,37 +52,57 @@ jobs:
         id: check
         env:
           # The script reads this to raise the API ceiling from 60 requests/hour to 5,000. It only
-          # lists the organization's repositories; every file comes from the raw host, which has no
-          # such limit. A read-only token is enough — nothing here writes.
+          # lists the organization's repositories and their root trees; every file comes from the raw
+          # host, which has no such limit. A read-only token is enough — nothing here writes.
           GITHUB_TOKEN: ${{ github.token }}
-        run: node scripts/check-criteria.mjs
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          node scripts/check-criteria.mjs \
+            --json-out "$RUNNER_TEMP/criteria-report.json" \
+            --issue-body "$RUNNER_TEMP/criteria-issue.md"
         continue-on-error: true
 
       # One issue, fixed title, **edited in place**: the same failure must not add a comment every
-      # week, or the thread becomes a weekly heartbeat nobody reads. A green run closes it, so an
-      # open issue always means "this is still broken".
+      # week, or the thread becomes a weekly heartbeat nobody reads.
+      #
+      # The run is red only for a finding not listed in known-findings.json. The issue stays open
+      # while **any** finding exists, tracked or not — so an open issue means "still not right", and
+      # a green run with an open issue means "known and tracked", not "nothing to see". A run with no
+      # findings closes it.
       - name: Report
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
           OUTCOME: ${{ steps.check.outcome }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REPORT: ${{ runner.temp }}/criteria-report.json
+          ISSUE_BODY: ${{ runner.temp }}/criteria-issue.md
         run: |
           set -euo pipefail
           title='Criteria: a rule is no longer held by anything'
           number=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
 
-          if [ "$OUTCOME" = 'success' ]; then
-            if [ -n "$number" ]; then
-              gh issue close "$number" --comment "The criteria hold again as of $RUN_URL."
-            fi
+          total=0
+          if [ -f "$REPORT" ]; then
+            total=$(node -e 'const r=require(process.env.REPORT);process.stdout.write(String((r.known??[]).length+(r.fresh??[]).length))')
+          fi
+
+          if [ "$total" = "0" ]; then
+            if [ -n "$number" ]; then gh issue close "$number" --comment "The criteria hold again as of $RUN_URL."; fi
             exit 0
           fi
 
-          body=$(printf 'The scheduled check found that a criterion in `docs/criteria.md` no longer holds.\n\nLast failing run: %s\n\nThe report is in that run log. This issue is edited in place rather than commented on, so an open issue means "still failing"; it closes on its own when the check goes green.\n\nIf the change was deliberate, update `docs/criteria.md` and `redlines-baseline.json` in the same pull request, so the document and the check agree again.\n' "$RUN_URL")
+          if [ -f "$ISSUE_BODY" ]; then
+            body=$(cat "$ISSUE_BODY")
+          else
+            body=$(printf 'The check did not produce a report. See the run:\n\n%s\n' "$RUN_URL")
+          fi
+
           if [ -n "$number" ]; then
             gh issue edit "$number" --body "$body"
           else
             gh issue create --title "$title" --body "$body"
           fi
-          exit 1
+
+          # Red means "something new". A tracked finding keeps the issue open and the run green.
+          [ "$OUTCOME" = 'success' ] && exit 0 || exit 1

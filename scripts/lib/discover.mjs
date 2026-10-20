@@ -79,24 +79,23 @@ async function get(url, init, attempts = 3) {
 }
 
 /**
- * Every path in a repository, as a set.
+ * The names of the files at a repository's **top level**, as a set.
  *
- * One request, and afterwards "does this file exist" costs nothing. The alternative — asking for a
- * file that is probably not there and reading a 404 — turns each *absence* into a round trip: the
- * lockfile rule alone would probe three missing files per repository, every week, forever.
+ * Deliberately not `?recursive=1`. Every absence worth checking on this sweep is a top-level one —
+ * the rival lockfiles. A recursive tree runs to hundreds of kilobytes for a repository of ordinary
+ * size and is truncated outright once it is large, so it buys nothing the root listing does not
+ * already answer, and costs two orders of magnitude more bytes than the requests it replaces.
  *
- * A truncated tree (GitHub's answer for very large repositories) is reported rather than ignored,
- * because a truncated tree would make absence check fail to be wrong: everything would look missing.
+ * Nested paths (`locale/en.json`, `test/redlines.*`, `.github/workflows/*`) are read from raw: those
+ * are files the criteria need the *contents* of anyway, so they cost one request whether they exist
+ * or not.
  */
-async function treeOf(repository, branch, fetchOnce) {
+async function topLevelOf(repository, branch, fetchOnce) {
   const fullName = repository.full_name
-  return fetchOnce(`${fullName}/tree`, async () => {
-    const response = await get(`${API}/repos/${fullName}/git/trees/${branch}?recursive=1`, {
-      headers: apiHeaders(),
-    })
-    if (!response.ok) throw new Error(`listing the tree of ${fullName}: HTTP ${response.status}`)
+  return fetchOnce(`${fullName}/root`, async () => {
+    const response = await get(`${API}/repos/${fullName}/git/trees/${branch}`, { headers: apiHeaders() })
+    if (!response.ok) throw new Error(`listing the root of ${fullName}: HTTP ${response.status}`)
     const body = await response.json()
-    if (body.truncated) throw new Error(`the tree of ${fullName} is truncated; existence checks would be wrong`)
     return new Set((body.tree ?? []).filter((entry) => entry.type === 'blob').map((entry) => entry.path))
   })
 }
@@ -170,18 +169,18 @@ export async function discoverPlugins(org, { fetchOnce = memo() } = {}) {
     }
 
     const read = (path) => fetchOnce(`${fullName}/${path}`, () => fileOf(fullName, path, branch))
-    // Absence is answered from the tree where possible, so a rule about a file that should *not*
-    // exist does not pay a round trip to discover that it does not.
-    const has = async (path) => {
+    // Only the root listing answers "is this top-level file there", so the two callers cannot drift:
+    // a nested path is always answered by reading it, which the criteria need anyway.
+    const hasTopLevel = async (path) => {
+      if (path.includes('/')) return (await read(path)) !== undefined
       try {
-        return (await treeOf(repository, branch, fetchOnce)).has(path)
+        return (await topLevelOf(repository, branch, fetchOnce)).has(path)
       } catch (error) {
-        // A tree we cannot read degrades to a fetch: slower, but the answer is still true.
-        trace('discover', `tree unavailable for ${repository.name}: ${error.message}`)
+        trace('discover', `root listing unavailable for ${repository.name}: ${error.message}`)
         return (await read(path)) !== undefined
       }
     }
-    plugins.push({ name: repository.name, fullName, branch, manifest, read, has })
+    plugins.push({ name: repository.name, fullName, branch, manifest, read, hasTopLevel })
   }
 
   plugins.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))

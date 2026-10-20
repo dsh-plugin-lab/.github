@@ -26,10 +26,16 @@
  *     duplicate 9,000 lines to gain nothing.
  *
  * Usage:
- *   node scripts/check-criteria.mjs                 # report; exit 1 when something fails
- *   node scripts/check-criteria.mjs --org <name>    # another organization
- *   node scripts/check-criteria.mjs --json          # machine-readable
- *   node scripts/check-criteria.mjs --update-baseline   # rewrite redlines-baseline.json from today
+ *   node scripts/check-criteria.mjs                    # report; exit 1 on a **new** finding
+ *   node scripts/check-criteria.mjs --org <name>       # another organization
+ *   node scripts/check-criteria.mjs --json             # machine-readable
+ *   node scripts/check-criteria.mjs --json-out <file>  # also write the report as JSON
+ *   node scripts/check-criteria.mjs --update-baseline  # rewrite redlines-baseline.json from today
+ *   node scripts/check-criteria.mjs --trace            # show fetching and cache reuse
+ *
+ * Exits 1 only for a finding that is **not** in known-findings.json. A tracked finding is printed
+ * and keeps the tracking issue open, but it does not fail the run: a run that is red every week for
+ * a known reason is indistinguishable from a run that is red because something broke.
  */
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
@@ -39,6 +45,7 @@ import { discoverPlugins } from './lib/discover.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const BASELINE = join(ROOT, 'redlines-baseline.json')
+const KNOWN_FINDINGS = join(ROOT, 'known-findings.json')
 
 const argv = process.argv.slice(2)
 const flag = (name) => argv.includes(name)
@@ -109,7 +116,7 @@ const CHECKS = [
     criterion: 'A published package carries the four inputs (§2): locale with an en entry, a declared icon shipped by files, engines.dsh, author',
     group: 'package.json',
     async run(repository) {
-      const { manifest, read } = repository
+      const { manifest, read, hasTopLevel } = repository
       const problems = []
 
       const locale = await read('locale/en.json')
@@ -128,7 +135,7 @@ const CHECKS = [
       if (typeof icon !== 'string' || icon === '') problems.push('package.json declares no icon')
       else {
         const iconPath = icon.replace(/^\.\//u, '')
-        if (await read(iconPath) === undefined) problems.push(`icon "${icon}" does not exist`)
+        if (!(await hasTopLevel(iconPath))) problems.push(`icon "${icon}" does not exist`)
         const files = manifest.files ?? []
         if (!files.includes(iconPath)) problems.push(`files does not list "${iconPath}"`)
       }
@@ -187,9 +194,9 @@ const CHECKS = [
     criterion: 'One package manager only: pnpm, with pnpm-lock.yaml as the sole lockfile',
     group: 'lockfile',
     async run(repository) {
-      const { manifest, read, has } = repository
+      const { manifest, read, hasTopLevel } = repository
       const problems = []
-      if (!(await has('pnpm-lock.yaml'))) problems.push('pnpm-lock.yaml is missing')
+      if (!(await hasTopLevel('pnpm-lock.yaml'))) problems.push('pnpm-lock.yaml is missing')
 
       // The declared signal wins over probing: `packageManager` says what this repository is built
       // with, and a second manager is then a contradiction to report rather than a file to hunt for.
@@ -201,7 +208,7 @@ const CHECKS = [
       // Absence is the answer to look for, so it is read from the tree the sweep already fetched:
       // three rival lockfiles per repository, every week, is three 404s nobody should pay for.
       for (const rival of ['package-lock.json', 'yarn.lock', 'bun.lockb']) {
-        if (await has(rival)) problems.push(`${rival} is present as well`)
+        if (await hasTopLevel(rival)) problems.push(`${rival} is present as well`)
       }
 
       // A manifest that still points at a rival's lockfile is a second manager in everything but name.
@@ -372,8 +379,66 @@ async function checkRedlines(repository, baseline) {
 
 // --- report ----------------------------------------------------------------------------------
 
+/**
+ * Findings someone has already read, decided about, and filed. `known-findings.json` is that list.
+ *
+ * The point is the distinction the criteria document itself draws: a run that is red every week is
+ * indistinguishable from a run that is red because something broke. A known finding is not news —
+ * it is printed, and it keeps the tracking issue open, but it does not fail the run. **A finding
+ * that is not on this list does.**
+ *
+ * The list has to be maintained, or it becomes the place findings go to be forgotten: a known entry
+ * whose finding no longer appears is reported as resolved, so removing it is the obvious next step.
+ */
+async function loadKnown() {
+  try {
+    const known = JSON.parse(await readFile(KNOWN_FINDINGS, 'utf8'))
+    return Array.isArray(known) ? known : []
+  } catch {
+    return []
+  }
+}
+
+const keyOf = (finding) => `${finding.repository}/${finding.check}`
+
+/**
+ * The tracking issue's body, built from a report.
+ *
+ * In the script rather than in the workflow: the workflow would otherwise carry a page of string
+ * escaping inside YAML, where it cannot be run or read, and every edit to the wording would be an
+ * edit to a shell heredoc.
+ */
+function issueBody(report, runUrl) {
+  const blocks = []
+  const section = (heading, findings, describe) => {
+    if (findings.length === 0) return
+    blocks.push(`## ${heading}`, '')
+    for (const finding of findings) {
+      blocks.push(`**${finding.repository}** — \`${finding.check}\``, '')
+      const note = describe?.(finding)
+      if (note) blocks.push(`> ${note}`, '')
+      for (const problem of finding.problems) blocks.push(`- ${problem}`)
+      blocks.push('')
+    }
+  }
+
+  section('Still failing, not yet fixed', report.known ?? [], (finding) => finding.reason)
+  section('New — this is why the run is red', report.fresh ?? [])
+
+  if ((report.stale ?? []).length > 0) {
+    blocks.push('## Resolved — delete these from `known-findings.json`', '')
+    for (const entry of report.stale) blocks.push(`- ${entry.repository} \`${entry.check}\``)
+    blocks.push('')
+  }
+
+  blocks.push(`Last run: ${runUrl}`)
+  return blocks.join('\n')
+}
+
 async function main() {
   const baseline = await loadBaseline()
+  const known = await loadKnown()
+  const knownKeys = new Map(known.map((entry) => [`${entry.repository}/${entry.check}`, entry]))
   const { plugins, unreadable } = await discoverPlugins(ORG)
 
   if (plugins.length === 0) {
@@ -417,9 +482,32 @@ async function main() {
     return
   }
 
+  const fresh = findings.filter((finding) => !knownKeys.has(keyOf(finding)))
+  const tracked = findings.filter((finding) => knownKeys.has(keyOf(finding)))
+  const stale = known.filter((entry) => !findings.some((finding) => keyOf(finding) === `${entry.repository}/${entry.check}`))
+
+  const report = {
+    org: ORG,
+    plugins: plugins.map((plugin) => plugin.name),
+    redlines: redlineCounts,
+    known: tracked.map((finding) => ({ ...finding, reason: knownKeys.get(keyOf(finding)).reason })),
+    fresh,
+    stale,
+  }
+
+  const outPath = option('--json-out', undefined)
+  if (outPath) await writeFile(outPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8')
+
+  // The tracking issue is rendered here, next to the data it describes, so the workflow only has to
+  // move text around.
+  const bodyPath = option('--issue-body', undefined)
+  if (bodyPath) {
+    await writeFile(bodyPath, `${issueBody(report, process.env.RUN_URL ?? '(no run url)')}\n`, 'utf8')
+  }
+
   if (flag('--json')) {
-    line(JSON.stringify({ org: ORG, plugins: plugins.map((plugin) => plugin.name), redlines: redlineCounts, findings }, null, 2))
-    process.exit(findings.length === 0 ? 0 : 1)
+    line(JSON.stringify(report, null, 2))
+    process.exit(fresh.length === 0 ? 0 : 1)
   }
 
   line(`checked ${plugins.length} plugin repositories in ${ORG}: ${plugins.map((plugin) => plugin.name).join(', ')}`)
@@ -432,18 +520,36 @@ async function main() {
   }
   line('')
 
-  if (findings.length === 0) {
-    line(`${CHECKS.length + 1} checks, 0 findings`)
+  if (tracked.length > 0) {
+    line(`${tracked.length} known finding(s) — tracked, not news:`)
+    for (const finding of tracked) {
+      line('')
+      line(`  ${finding.repository}  [${finding.check}]  ${knownKeys.get(keyOf(finding)).trackedIn}`)
+      for (const problem of finding.problems) line(`    - ${problem}`)
+    }
+    line('')
+  }
+
+  if (stale.length > 0) {
+    line(`${stale.length} known finding(s) no longer occur — delete them from known-findings.json:`)
+    for (const entry of stale) line(`  ${entry.repository}  [${entry.check}]  ${entry.trackedIn}`)
+    line('')
+  }
+
+  if (fresh.length === 0) {
+    line(`${CHECKS.length + 1} checks, 0 new findings`)
     return
   }
 
-  line(`${findings.length} finding(s):`)
-  for (const finding of findings) {
+  line(`${fresh.length} NEW finding(s):`)
+  for (const finding of fresh) {
     line('')
     line(`  ${finding.repository}  [${finding.check}]`)
     line(`    rule: ${finding.criterion}`)
     for (const problem of finding.problems) line(`    - ${problem}`)
   }
+  line('')
+  line('A new finding: either fix it, or add it to known-findings.json with a reason and a tracking issue.')
   process.exit(1)
 }
 
