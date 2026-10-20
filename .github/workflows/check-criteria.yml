@@ -1,0 +1,88 @@
+# Check that the criteria still hold across every plugin repository.
+#
+# One workflow, and one job. This repository deliberately has no build and no dependencies (see
+# README.md); the script it runs is plain Node with `node:` built-ins only, and no install step
+# appears below. What changed is only the claim that this repository could get by with no CI at
+# all: it now holds a document that makes promises about other repositories, and a promise with no
+# execution body is the failure the document itself is written against.
+#
+# Why a schedule: nothing here changes when the plugin repositories change. A redline deleted in one
+# of them appears in no diff of this repository, so a weekly sweep is the only way to notice.
+#
+# Why the issue: a scheduled run's failure mail reaches whoever last edited the cron, which is not a
+# notification channel. A red run opens or updates one issue with a fixed title, so "this stayed
+# broken for a month" is visible rather than an email nobody read.
+name: Check criteria
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/criteria.md'
+      - 'docs/criteria_zh.md'
+      - 'scripts/check-criteria.mjs'
+      - 'scripts/lib/discover.mjs'
+      - 'redlines-baseline.json'
+      - '.github/workflows/check-criteria.yml'
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: check-criteria
+  cancel-in-progress: false
+
+jobs:
+  criteria:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node is provisioned, not installed around: no package manager runs and no lockfile is read.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check the criteria
+        id: check
+        env:
+          # The script reads this to raise the API ceiling from 60 requests/hour to 5,000. It only
+          # lists the organization's repositories; every file comes from the raw host, which has no
+          # such limit. A read-only token is enough — nothing here writes.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/check-criteria.mjs
+        continue-on-error: true
+
+      # One issue, fixed title, updated in place: the same failure does not get a fresh comment every
+      # week, and a green run closes it rather than leaving a stale red thread.
+      - name: Report
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUTCOME: ${{ steps.check.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          title='Criteria: a rule is no longer held by anything'
+
+          if [ "$OUTCOME" = 'success' ]; then
+            number=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
+            if [ -n "$number" ]; then
+              gh issue close "$number" --comment "The criteria hold again as of $RUN_URL."
+            fi
+            exit 0
+          fi
+
+          body=$(printf 'The scheduled check found that a criterion in `docs/criteria.md` no longer holds.\n\nSee the run for the itemised report: %s\n\nThis issue is updated in place — the same failure does not get a new comment each week. It closes on its own when the check goes green.\n\nIf the change was deliberate, update `docs/criteria.md` and `redlines-baseline.json` in the same pull request, so the document and the check agree again.\n' "$RUN_URL")
+          number=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi
+          exit 1

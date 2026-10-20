@@ -76,8 +76,14 @@ community files, so the organization profile keeps both languages as two files.
 - **No release and no version.** There is no `package.json` and no lockfile; nothing
   is published from here. There is also no license, because nothing is distributed
   from here — the plugins carry their own.
-- **No build, no dependencies, no CI.** The checks are a link check and a line-ending
-  check, run by hand; the commands are in [AGENTS.md](AGENTS.md). `scripts/scaffold.mjs`
-  adds no dependency: it is plain Node with `node:` built-ins only.
+- **No build and no dependencies.** There is no install step anywhere: `scripts/scaffold.mjs` and
+  `scripts/check-criteria.mjs` are plain Node with `node:` built-ins only.
+- **Exactly one workflow, and it may only check.** `.github/workflows/check-criteria.yml` verifies
+  that the criteria this repository publishes still hold in the plugin repositories. It installs
+  nothing. This is the one exception to "no CI", and it is narrow on purpose: the moment this
+  repository held a document making promises about other repositories, a promise with no execution
+  body became the failure that document is written against — see
+  [the decision](.agents/notes/2026-10-20-the-org-repo-checks-its-own-criteria.md). The remaining
+  checks — links and line endings — are still run by hand; the commands are in [AGENTS.md](AGENTS.md).
 - **No repository-specific content.** What one plugin does, how it builds, and what it
   deliberately will not do stay in that plugin's own repository.

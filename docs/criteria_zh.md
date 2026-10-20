@@ -30,7 +30,7 @@
 | 发出去的包**不带**只给 README 看的图：图住仓里，README 用相对路径 | 必须一致 | 各仓一条红线断言 —— 排除条目在、README 用相对路径、运行期资产仍在包里 |
 | 合并的版本真的发到 npm | 必须一致 | 各仓 `docs/PUBLISHING.md` 的发布后核对；全组织范围由市场的漂移报告发现 |
 | 声明的每一族宿主都被巡检判过 | 必须一致 | 各仓 `scripts/check-declaration.mjs`，按行打印计数 |
-| 锁文件里的 `resolved` 指向官方 registry | 必须一致 | 各仓一条红线断言（条数由脚本数，不写进文档） |
+| 锁文件里**除了官方 registry 不出现别的地址**。pnpm 记的是 integrity 而不是 tarball 地址，所以断言查的是文件里出现的**每一个 `http(s)` URL** —— 出现一个就说明这份锁文件在镜像上生成过 | 必须一致 | 各仓一条红线断言（条数由脚本数，不写进文档）；`scripts/check-criteria.mjs` 从本仓再核一遍同一条件 |
 | **只用 pnpm**，`pnpm-lock.yaml` 是唯一锁文件 | 必须一致 | 模板里写明；迁移过的仓其 `.prettierignore` 由 `scaffold check` 对齐 |
 | 缺 peer 包 → 失败；只缺 dev → 警告并跳过 | 应当一致 | 判定逻辑共享（**默认失败**）；跟哪条宿主线由各仓定 |
 | peer 与 dev 的版本必须一致 | 必须一致 | 各仓一条红线断言 |

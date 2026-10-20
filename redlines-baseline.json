@@ -1,0 +1,22 @@
+{
+  "dsh-ds-balance": {
+    "file": "test/redlines.test.ts",
+    "describe": 18,
+    "it": 71
+  },
+  "dsh-plugin-debugging": {
+    "file": "test/redlines.test.ts",
+    "describe": 35,
+    "it": 121
+  },
+  "dsh-workbuddy-bridge": {
+    "file": "tests/redlines.spec.ts",
+    "describe": 12,
+    "it": 43
+  },
+  "dsh-zhihu-search": {
+    "file": "test/redlines.test.ts",
+    "describe": 10,
+    "it": 28
+  }
+}

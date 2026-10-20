@@ -33,29 +33,38 @@
 - 铺新仓骨架：`node scripts/scaffold.mjs <空目录> [--host-only]`
   （先 `--dry-run` 看清单；目标非空会被拒绝，这是有意的 —— 它只给空目录用）
 - **改过 `templates/` 就跑一遍 `--verify`**：它装依赖并跑生成仓自己的 CI 检查
-  （`check` / `lint` / `format:check`）。这是模板唯一的验收手段 —— 本仓没有 CI，
-  模板坏了不会有别的东西报出来
+  （`check` / `lint` / `format:check`）。这是模板唯一的验收手段 —— 本仓的 workflow 只核判据，
+  不跑模板，模板坏了不会有别的东西报出来
 - **模板改了判据要留反向控制**：把生成仓的某个文件改坏一处，确认对应守卫**真的会红**。
   「现在这条绿」和「这条判据有牙齿」是两件事，后者要单独证
 - 核对逐字相同件：`node scripts/scaffold.mjs check <仓目录>...` —— 模板那一份与仓内同名文件
   做 SHA-256 比对。**不一致不必然是缺陷**（分号、锁文件名本来就是逐仓参数），
   它报的是「知道它不同」，不是「强行一样」
-- 本仓**无 CI、无构建、无依赖安装**：改完跑上面几条，再去 GitHub 上看渲染。
-  `scaffold.mjs` 只用 `node:` 内建模块，不破这条
+- 核对判据落点：`node scripts/check-criteria.mjs`（`--trace` 看抓取与缓存，`--json` 给机器读，
+  `--update-baseline` 重写 `redlines-baseline.json`）。它自动发现插件仓（`dsh-` 前缀 + 清单有 `dsh`
+  字段），比对可机检的判据与红线规模。**改过判据就跑一遍**。
+- 本仓**无构建、无依赖安装**：改完跑上面几条，再去 GitHub 上看渲染。
+  两个脚本都只用 `node:` 内建模块，不破这条
+- **只有一个 workflow，且只许核对判据**：`.github/workflows/check-criteria.yml`。加第二个要先改
+  [决策记录](.agents/notes/2026-10-20-the-org-repo-checks-its-own-criteria.md)。
 
 ## 验证快照
 
-- 无 CI；校验 = 链接校验 + 换行校验手工跑，定性结论才算数。
+- 校验 = 链接校验 + 换行校验**手工跑**；判据落点由**唯一的 workflow 每周自动核**（见上）。
+  两者不重叠：手工那两条查本仓文档自身，workflow 查别的仓是否还符合本仓发布的判据。
 - 本仓的判定要看**渲染效果**而不是文件内容：issue 表单要点开 New issue 看下拉项，
   组织主页要看 github.com/dsh-plugin-lab，回退要看 `community/profile` 的返回。
 
 ## 待办
 
 - [ ] 平台侧设置（私密漏洞报告、ruleset、Discussions）由人工在设置界面开启，不属 agent 范围。
-- [ ] **判据声明了落点，但没人核落点还在不在。** `docs/criteria.md` 多行写着「各仓一条红线断言」，
-  四个插件仓现在都真有；可是本仓没有 CI，也没有脚本，**删掉一条红线不会有任何东西报警**。
-  落点应当是 `scripts/scaffold.mjs` 的一个 `check` 子项（扫各仓的 `test/redlines.*`），或者一条明确的
-  「红线由人核」的说明——两者选一个，别悬着。这属于「声明了规则却没有检查」，与判据文档自己的立论冲突。
+- [ ] **`dsh-workbuddy-bridge` 有两条判据没有执行体**（`check-criteria.mjs` 实测）：判据文档写着
+  「peer 与 dev 版本逐条相等」「四个编译器开关各管一层」，该仓的红线文件里都没有对应断言，
+  且实测三处 peer/dev 版本不一致（`@deepseek-ai/cordis`、`@deepseek-ai/schemastery`、`react-dom`）。
+  二选一：补断言，或把判据那一行的档位/措辞改成与现状一致。
+- [ ] **`dsh-plugin-debugging` 的 `files` 列了整个 `assets/` 目录**（再按名排除两张图）。
+  判据要求「新截图不该悄悄进包」，现在新增一张图仍会进包。要么改成逐文件列举运行期资产，
+  要么改判据承认这种写法。
 
 ## 活跃坑
 
