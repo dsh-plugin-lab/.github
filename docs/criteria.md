@@ -30,7 +30,7 @@ Three tiers. The last column of the table is not prose: it names the file or scr
 | Rule | Tier | What judges it |
 |---|---|---|
 | A published package carries the four inputs of the conventions (§2) | Must agree | `check:release` per repository (it asserts what the tarball and manifest contain); the market's diagnostics make an omission visible |
-| A published package does **not** carry the images only the README shows: they live in the repository and are referenced relatively | Must agree | a redline assertion per repository — the exclusion entries present, the README using relative paths, the runtime assets still in the package |
+| A published package does **not** carry the images only the README shows: they live in the repository and are referenced relatively | Must agree | a redline assertion per repository — the README-only images outside the package's coverage, the README using relative paths, the runtime assets still in the package |
 | A merged version reaches npm | Must agree | the post-release check in each repository's `docs/PUBLISHING.md`; detected org-wide by the market's drift report |
 | Every declared host family is judged by the patrol | Must agree | `scripts/check-declaration.mjs` per repository, printing a count per line |
 | The lockfile carries **no address but the official registry's**. pnpm records integrity, not tarball URLs, so the assertion is over every http(s) URL that appears at all — one is already a leftover from a lockfile generated against a mirror | Must agree | a redline assertion per repository (the count is computed, never copied into a document); `scripts/check-criteria.mjs` re-checks the same condition from here |

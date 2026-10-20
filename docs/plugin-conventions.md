@@ -284,9 +284,12 @@ reads: **images that only the README shows do not belong in the published packag
   size of the harm is not the point; the direction is.
 - **This does not apply to `icon.svg`**, which the market does read (see the table above) and which is
   therefore shipped.
-- **Adding a runtime asset to `assets/` still ships it**, because the exclusion is a list of specific
-  files, not of the directory — a plugin that needs a file at runtime keeps it working while a new
-  screenshot never silently enters the package.
+- **Runtime assets still ship — because `files` names each one.** A plugin that reads a file at runtime
+  keeps working, while a newly added screenshot never enters the package on its own: the list is of
+  files, not of the directory. The cost is real and is paid knowingly — an asset added later does not
+  ship until it is named, so a repository that enumerates files needs an assertion over the
+  **directory** (every file there is either a README image or named in `files`); a test that reads from
+  disk cannot notice the omission.
 
 **Field semantics live elsewhere, on purpose**: which JSON key, which path, what the reader does with an
 unknown member → the market's [market-format.md](https://github.com/dsh-plugin-lab/market/blob/main/docs/market-format.md).
