@@ -42,6 +42,7 @@ import { dirname, join } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { discoverPlugins } from './lib/discover.mjs'
+import { judgeTsconfigFloor } from './lib/tsconfig-floor.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const BASELINE = join(ROOT, 'redlines-baseline.json')
@@ -103,6 +104,28 @@ function withoutComments(source) {
  *  all is a leftover from a lockfile generated against a mirror. */
 function urlsIn(text) {
   return [...new Set(text.match(/https?:\/\/[^\s"',)]+/gu) ?? [])]
+}
+
+
+/**
+ * A `tsconfig*.json` parsed whole — `compilerOptions` *and* `extends` — tolerating the comments and
+ * trailing commas editors and humans leave in one. `JSON.parse` alone rejects both, and reading a
+ * config is not the place to insist on a dialect the file is not required to be written in.
+ *
+ * Returns the whole document rather than just `compilerOptions` because whether a config inherits
+ * decides whether it is judged at all: a file that `extends` another gets its switches from there.
+ */
+function parsedConfigOf(source) {
+  const stripped = source
+    // Line comments, but not the `//` inside a URL string.
+    .replace(/^\s*\/\/.*$/gmu, '')
+    .replace(/\/\*[\s\S]*?\*\//gu, '')
+    .replace(/,(\s*[}\]])/gu, '$1')
+  try {
+    return JSON.parse(stripped)
+  } catch {
+    return undefined
+  }
 }
 
 // --- the checks ------------------------------------------------------------------------------
@@ -232,6 +255,32 @@ const CHECKS = [
         else if (dev[name] !== range) problems.push(`${name}: peer "${range}" but dev "${dev[name]}"`)
       }
       return problems
+    },
+  },
+  {
+    id: 'dead-code-switches',
+    criterion:
+      'Four dead-code switches are a floor: noUnusedLocals, noUnusedParameters, noImplicitReturns, noFallthroughCasesInSwitch read true in every repository',
+    group: 'tsconfig',
+    async run(repository) {
+      const { read, topLevelFiles } = repository
+
+      // Every `tsconfig*.json` at the repository root is a candidate, and the rule is per *file that
+      // does not inherit*: a config that `extends` another one gets the switches from it, so demanding
+      // a repeat there would be demanding noise. `dsh-workbuddy-bridge` is why this is not simply
+      // "read tsconfig.json": its client config declares no `extends`, so it is a second independent
+      // list, and reading only the root would leave half that repository unguarded while reporting
+      // green.
+      //
+      // The judging itself is `judgeTsconfigFloor`, kept pure so it can be made to fail on purpose —
+      // this checker reads GitHub, so breaking a local file would prove nothing.
+      const candidates = (await topLevelFiles()).filter((path) => /^tsconfig.*\.json$/u.test(path))
+      const configs = []
+      for (const path of candidates) {
+        const source = await read(path)
+        configs.push({ path, parsed: source === undefined ? undefined : parsedConfigOf(source) })
+      }
+      return judgeTsconfigFloor(configs)
     },
   },
   {

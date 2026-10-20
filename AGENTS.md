@@ -40,6 +40,9 @@
 - 核对逐字相同件：`node scripts/scaffold.mjs check <仓目录>...` —— 模板那一份与仓内同名文件
   做 SHA-256 比对。**不一致不必然是缺陷**（分号、锁文件名本来就是逐仓参数），
   它报的是「知道它不同」，不是「强行一样」
+- 判据机检的纯判断用 `node --test scripts/test/` 验（零依赖，`node:` 内建）：
+  它读的是 **GitHub 上的已推送版本**，所以「本地改坏一个文件看它红不红」**证明不了任何事**
+  —— 要验子弹得直接喂坏数据给纯函数。**改过判据的判断逻辑就跑一遍**
 - 核对判据落点：`node scripts/check-criteria.mjs`（`--trace` 看抓取与缓存，`--json` 给机器读，
   `--update-baseline` 重写 `redlines-baseline.json`）。它自动发现插件仓（`dsh-` 前缀 + 清单有 `dsh`
   字段），比对可机检的判据与红线规模。**改过判据就跑一遍**。
@@ -58,13 +61,12 @@
 ## 待办
 
 - [ ] 平台侧设置（私密漏洞报告、ruleset、Discussions）由人工在设置界面开启，不属 agent 范围。
-- [ ] **`dsh-workbuddy-bridge` 的「四个编译器开关各管一层」仍没有执行体**：判据是 **Should agree** 档，
-  那几个开关在 `tsconfig.json` 与 `tsconfig.client.json` 里都在（`strict` / `noUncheckedIndexedAccess` /
-  `noFallthroughCasesInSwitch` / `noUnusedLocals`），缺的是「该仓自己断言它们还在」这一层 ——
-  开关被谁删掉时没有任何东西会红。
-  （同一条待办里的「peer 与 dev 版本逐条相等」已于 2026-10-20 处理：三处漂移修掉并补了红线断言，
-  决策记录在该仓 `.agents/notes/2026-10-20-peer-dev-version-agreement.md`。）
-  二选一：补断言，或把判据那一行的档位/措辞改成与现状一致。
+- [x] ~~四个编译器开关没有执行体~~ —— 2026-10-20 处理：判据升为 **Must agree** 并收窄成「四个死代码开关
+  是下限」（`noUnusedLocals` / `noUnusedParameters` / `noImplicitReturns` / `noFallthroughCasesInSwitch`；
+  `strict` 那一族另成一节）。四仓各有一条红线断言，`dsh-workbuddy-bridge` 补齐了缺的
+  `noImplicitReturns`（`tsconfig.json` 与 `tsconfig.client.json` 两份独立清单都加）。本仓另加一条机检
+  `dead-code-switches`，判据那一行承诺的「本仓再读一遍」由它兑现。论证见
+  [.agents/notes/2026-10-20-dead-code-switches-are-a-floor.md](.agents/notes/2026-10-20-dead-code-switches-are-a-floor.md)。
 
 ## 活跃坑
 

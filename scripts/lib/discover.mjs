@@ -180,7 +180,26 @@ export async function discoverPlugins(org, { fetchOnce = memo() } = {}) {
         return (await read(path)) !== undefined
       }
     }
-    plugins.push({ name: repository.name, fullName, branch, manifest, read, hasTopLevel })
+    // Some criteria read *every* file of a family (`tsconfig*.json`), which `hasTopLevel` cannot
+    // answer: probing a list of guesses would miss the one a repository actually uses. The listing is
+    // already fetched and memoised for `hasTopLevel`, so this costs no extra request.
+    const topLevelFiles = async () => {
+      try {
+        return [...(await topLevelOf(repository, branch, fetchOnce))]
+      } catch (error) {
+        trace('discover', `root listing unavailable for ${repository.name}: ${error.message}`)
+        return []
+      }
+    }
+    plugins.push({
+      name: repository.name,
+      fullName,
+      branch,
+      manifest,
+      read,
+      hasTopLevel,
+      topLevelFiles,
+    })
   }
 
   plugins.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))

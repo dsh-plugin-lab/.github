@@ -34,7 +34,7 @@
 | **只用 pnpm**，`pnpm-lock.yaml` 是唯一锁文件 | 必须一致 | 模板里写明；迁移过的仓其 `.prettierignore` 由 `scaffold check` 对齐 |
 | 缺 peer 包 → 失败；只缺 dev → 警告并跳过 | 应当一致 | 判定逻辑共享（**默认失败**）；跟哪条宿主线由各仓定 |
 | peer 与 dev 的版本必须一致 | 必须一致 | 各仓一条红线断言 |
-| 四个编译器开关与 ESLint 各管一层 | 应当一致 | 各仓红线断言「开关存在」；**开关的值放在 `tsconfig.json`**，工具参数各仓自定 |
+| **四个死代码开关是下限，不是偏好**：`noUnusedLocals`、`noUnusedParameters`、`noImplicitReturns`、`noFallthroughCasesInSwitch` 在每个仓里都读到 `true`。ESLint 管编译器覆盖不到的那一层 | 必须一致 | 各仓一条红线断言这四个都是 `true`；`scripts/check-criteria.mjs` 从本仓再读一遍每个**不 `extends` 别的**根 `tsconfig*.json`（继承了的那份由它继承的那份回答）。**下限就是这四个，仓在上限多开什么是它自己的事**；strict 那一族（`strict` 及同伴）自成一节 |
 | 发布态不变量 | 必须一致 | 各仓 `check:release`（模板带一份，各仓**只追加**不删）；纯宿主插件可对 `files` 一项豁免，**宿主兼容区间不可豁免** |
 | 发布流程**不得**改写版本号 | 必须一致 | `check:release` 里的 `findVersionWrites`，**配反向控制**。改版本号是发布前的独立一步 |
 | **手动与 tag 两个入口都能触发**，且 tag 触发时基线排除该 tag | 必须一致 | 各仓发布流程里的一条断言 |
