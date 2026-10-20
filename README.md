@@ -14,7 +14,7 @@ here changes what those repositories show, and appears in none of their diffs.**
 | Reporting a problem, or asking a question | [SUPPORT.md](SUPPORT.md) |
 | Reporting a vulnerability | [SECURITY.md](SECURITY.md) |
 | Working **in this repository** | [AGENTS.md](AGENTS.md) — the commands and the rules that are specific to it |
-| Deciding whether something is a defect across the organization | [docs/plugin-conventions.md](docs/plugin-conventions.md) ([中文](docs/plugin-conventions_zh.md)) |
+| Deciding whether something is a defect across the organization | [docs/plugin-conventions.md](docs/plugin-conventions.md) |
 | Looking at the organization's public page | [profile/README.md](profile/README.md) |
 | Browsing or installing the plugins themselves | [dsh-plugin-lab/market](https://github.com/dsh-plugin-lab/market) — the plugin market index |
 
@@ -39,7 +39,7 @@ Two groups, and they behave differently.
 | File | What it is |
 |---|---|
 | [AGENTS.md](AGENTS.md) | the commands, the global rules and the traps of **this** repository |
-| [docs/plugin-conventions.md](docs/plugin-conventions.md) | the cross-repository criteria, item by item, with what deliberately differs ([中文](docs/plugin-conventions_zh.md)) |
+| [docs/plugin-conventions.md](docs/plugin-conventions.md) | the cross-repository criteria, item by item, with what deliberately differs |
 | [assets/badges.md](assets/badges.md) | copy-ready badge snippets; a store, not a live document |
 | [templates/plugin/](templates/plugin/) + [scripts/scaffold.mjs](scripts/scaffold.mjs) | the skeleton for a **new** plugin repository. A **seeder, not a synchroniser** — nothing here is ever written back into an existing repository |
 | [.agents/notes/](.agents/notes/) | why a decision was made, and what it ruled out |

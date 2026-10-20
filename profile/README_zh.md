@@ -2,7 +2,7 @@
 
 [English](https://github.com/dsh-plugin-lab/.github/blob/main/profile/README.md) | [中文](https://github.com/dsh-plugin-lab/.github/blob/main/profile/README_zh.md)
 
-[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的插件集合。
+为 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 打造的一组插件。
 
 ## 插件
 
@@ -17,27 +17,27 @@
 
 ### 从插件市场安装
 
-打开 **插件**，启用 **自定义插件市场**，然后在 **发现** 里添加这个索引源：
+先在 **插件** 页启用 **自定义插件市场**，再到 **发现** 里把这个索引源加进去：
 
 ```text
 https://dsh-plugin-lab.github.io/market/index.json
 ```
 
-上面列出的插件都能在那里装。索引由
+以上插件都可以从那里安装。索引由
 [dsh-plugin-lab/market](https://github.com/dsh-plugin-lab/market) 生成。
 
 ### 从命令行安装
 
 ```shell
-dsh plugin --profile <profile> add <包名>
+dsh plugin --profile <profile> add <package-name>
 ```
 
 ## [dsh-plugin-lab/.github](https://github.com/dsh-plugin-lab/.github) 里有什么
 
-| 想找 | 文件 |
+| 你的问题 | 看这里 |
 |---|---|
 | 怎么贡献 | [CONTRIBUTING.md](https://github.com/dsh-plugin-lab/.github/blob/main/CONTRIBUTING.md) |
 | 提问或报 bug 去哪 | [SUPPORT.md](https://github.com/dsh-plugin-lab/.github/blob/main/SUPPORT.md) |
 | 怎么私密报告漏洞 | [SECURITY.md](https://github.com/dsh-plugin-lab/.github/blob/main/SECURITY.md) |
-| 各插件仓共享哪些规矩 | [plugin-conventions.md](https://github.com/dsh-plugin-lab/.github/blob/main/docs/plugin-conventions.md) ([中文](https://github.com/dsh-plugin-lab/.github/blob/main/docs/plugin-conventions_zh.md)) |
+| 各插件仓共同遵守的规矩 | [plugin-conventions.md](https://github.com/dsh-plugin-lab/.github/blob/main/docs/plugin-conventions.md) |
 | 哪些文件放组织级、为什么 | [README.md](https://github.com/dsh-plugin-lab/.github/blob/main/README.md) |

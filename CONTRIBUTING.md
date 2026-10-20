@@ -19,7 +19,7 @@ file points rather than repeats.
 | You want to know | Read |
 |---|---|
 | How to build, test and work in **this** repository | that repository's `AGENTS.md` |
-| What is the same across every repository, and what must be true | [docs/plugin-conventions.md](docs/plugin-conventions.md) ([中文](docs/plugin-conventions_zh.md)) |
+| What is the same across every repository, and what must be true | [docs/plugin-conventions.md](docs/plugin-conventions.md) |
 | Why a decision was made, and what it ruled out | that repository's `.agents/notes/` |
 | How a release actually happens | that repository's `docs/PUBLISHING.md` |
 | Where the shared files come from | [the organization repository](https://github.com/dsh-plugin-lab/.github) |
