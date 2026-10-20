@@ -1,0 +1,17 @@
+# Actions version drift comes to us: dependabot opens a bump PR, and the only workflow this
+# repository has runs on it first.
+#
+# The github-actions ecosystem only. This repository has no npm dependencies at all — the scripts
+# use `node:` built-ins by design — so any npm update it proposed would be noise.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ['*']

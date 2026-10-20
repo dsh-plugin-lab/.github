@@ -26,6 +26,9 @@
 三条边界一起定死，防止它长成「组织仓从此可以有 CI」：
 
 - **只许一个 workflow**（`.github/workflows/check-criteria.yml`），加第二个要先改这份记录。
+  （`.github/dependabot.yml` 于 2026-10-20 补上，它不是 workflow：它不改这个仓做什么，
+  只保证那个 workflow 里 `checkout` / `setup-node` 的版本有人提醒 —— 加之前它们停在 v4，
+  而当前是 v7，因为没有 dependabot 所以没有任何东西会说。）
 - **不跑 install**：脚本只用 `node:` 内建模块。仓库「无构建、无依赖」两条原样保留。
 - **只查跨仓成立的、可机检的那部分**。各仓特有的判据（`dsh-plugin-debugging` 的 35 条、
   `dsh-ds-balance` 的圆环几何）一条都不查——那是它们自己的事，抄过来只是重复。
