@@ -6,12 +6,12 @@
 
 ## 插件
 
-| 插件 | 用途 |
-|---|---|
-| [dsh-ds-balance](https://github.com/dsh-plugin-lab/dsh-ds-balance) | 侧栏显示 DeepSeek 账户余额 |
-| [dsh-zhihu-search](https://github.com/dsh-plugin-lab/dsh-zhihu-search) | 知乎站内搜索 / 全网搜索 / 知乎直答 |
-| [dsh-workbuddy-bridge](https://github.com/dsh-plugin-lab/dsh-workbuddy-bridge) | 把 WorkBuddy 桌面 App 的模型接入 DSH |
-| [dsh-plugin-debugging](https://github.com/dsh-plugin-lab/dsh-plugin-debugging) | DSH 插件运行时诊断：区分实时生效、重启和热重载。 |
+| | 插件 | 用途 |
+|---|---|---|
+| <img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-ds-balance/main/icon.svg" width="80" height="80" alt="dsh-ds-balance"> | [dsh-ds-balance](https://github.com/dsh-plugin-lab/dsh-ds-balance) | 侧栏显示 DeepSeek 账户余额 |
+| <img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-zhihu-search/main/icon.svg" width="80" height="80" alt="dsh-zhihu-search"> | [dsh-zhihu-search](https://github.com/dsh-plugin-lab/dsh-zhihu-search) | 知乎站内搜索 / 全网搜索 / 知乎直答 |
+| <img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-workbuddy-bridge/main/icon.svg" width="80" height="80" alt="dsh-workbuddy-bridge"> | [dsh-workbuddy-bridge](https://github.com/dsh-plugin-lab/dsh-workbuddy-bridge) | 把 WorkBuddy 桌面 App 的模型接入 DSH |
+| <img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-plugin-debugging/main/icon.svg" width="80" height="80" alt="dsh-plugin-debugging"> | [dsh-plugin-debugging](https://github.com/dsh-plugin-lab/dsh-plugin-debugging) | DSH 插件运行时诊断：区分实时生效、重启和热重载。 |
 
 ## 安装
 

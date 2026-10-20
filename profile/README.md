@@ -6,12 +6,12 @@ Plugins for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
 
 ## Plugins
 
-| Plugin | Purpose |
-|---|---|
-| [dsh-ds-balance](https://github.com/dsh-plugin-lab/dsh-ds-balance) | Show your DeepSeek account balance in the sidebar |
-| [dsh-zhihu-search](https://github.com/dsh-plugin-lab/dsh-zhihu-search) | Zhihu site search / web search / Zhihu Direct Answer |
-| [dsh-workbuddy-bridge](https://github.com/dsh-plugin-lab/dsh-workbuddy-bridge) | Bridge WorkBuddy desktop app models into DSH |
-| [dsh-plugin-debugging](https://github.com/dsh-plugin-lab/dsh-plugin-debugging) | Runtime diagnostics for DSH plugins: live, restart, or hot reload. |
+| | Plugin | Purpose |
+|---|---|---|
+| <img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-ds-balance/main/icon.svg" width="80" height="80" alt="dsh-ds-balance"> | [dsh-ds-balance](https://github.com/dsh-plugin-lab/dsh-ds-balance) | Show your DeepSeek account balance in the sidebar |
+| <img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-zhihu-search/main/icon.svg" width="80" height="80" alt="dsh-zhihu-search"> | [dsh-zhihu-search](https://github.com/dsh-plugin-lab/dsh-zhihu-search) | Zhihu site search / web search / Zhihu Direct Answer |
+| <img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-workbuddy-bridge/main/icon.svg" width="80" height="80" alt="dsh-workbuddy-bridge"> | [dsh-workbuddy-bridge](https://github.com/dsh-plugin-lab/dsh-workbuddy-bridge) | Bridge WorkBuddy desktop app models into DSH |
+| <img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-plugin-debugging/main/icon.svg" width="80" height="80" alt="dsh-plugin-debugging"> | [dsh-plugin-debugging](https://github.com/dsh-plugin-lab/dsh-plugin-debugging) | Runtime diagnostics for DSH plugins: live, restart, or hot reload. |
 
 ## Installation
 
