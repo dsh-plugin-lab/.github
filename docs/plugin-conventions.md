@@ -5,16 +5,34 @@
 **Who this is for**: you are writing a plugin in this organization, new or existing, and you need to know
 what that repository must look like — what the scaffold lays down, which parts are not negotiable, and
 what the published package has to carry.
+
 **Who this is not for**: judging whether a difference is a **defect**. That is
 [criteria.md](criteria.md): it gives each rule above a tier and names the file or script that judges it.
 Working in one repository (that repository's `AGENTS.md`), contributing (the organization's
 `CONTRIBUTING.md`) and running a release (that repository's `docs/PUBLISHING.md`) are their own documents.
+
 **What stays out**: arguments, trade-offs and post-mortems → [.agents/notes/](../.agents/notes/). This
 document keeps the shape, one line of intent each, reopening conditions, and pointers.
 
 Three sections: **the shape a repository has** (§1), **what a published package must carry** (§2), and
-**the two things deliberately left per repository** (§3).
+**the two things deliberately left per repository** (§3). A fourth says who they bind.
 
+## Who this binds
+
+Three sections above, one kind of repository: the **plugin repository** — one per plugin, one npm package
+that is also a DSH bundle. The other two repositories in this organization are outside it:
+
+- **The organization repository** (`dsh-plugin-lab/.github`) publishes nothing; what it holds and why is its
+  own [README.md](../README.md).
+- **The market** (`dsh-plugin-lab/market`) builds a generated index and publishes no package; what it must
+  do is its own repository's business.
+
+Both are **management-layer facilities**: they exist because there are plugins, not as plugins. Two
+questions decide where a piece of content belongs, in this order:
+
+1. **Can the mechanism fall back?** If yes → the organization repository (its `.github`), and no plugin
+   repository changes a line.
+2. **Otherwise** → the repository that owns it, with the shape recorded here.
 ## 1. The shape the scaffold generates
 
 **This is a target, not a claim of uniformity.** What follows is what `node scripts/scaffold.mjs`
@@ -26,6 +44,7 @@ defect — what must agree is in [criteria.md](criteria.md).
 (`node scripts/scaffold.mjs <dir>`, then `--verify` runs the generated repository's own checks). Read
 this section to know **why** the generated file looks the way it does and **where it may legitimately
 differ** — not to transcribe it.
+
 **For an existing repository, this is the reference**: what the shape is, and the parts that are not
 negotiable.
 
@@ -271,8 +290,6 @@ reads: **images that only the README shows do not belong in the published packag
 **Field semantics live elsewhere, on purpose**: which JSON key, which path, what the reader does with an
 unknown member → the market's [market-format.md](https://github.com/dsh-plugin-lab/market/blob/main/docs/market-format.md).
 This section states the **obligation**; that document is the **contract**. Neither copies the other.
-
----
 
 ---
 

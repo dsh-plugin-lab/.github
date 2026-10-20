@@ -5,12 +5,19 @@
 **Who this is for**: you are judging whether a difference between repositories, or a published package, is
 a **defect** — a pull request that changes the version, a release that reads the wrong thing, two
 repositories that stopped looking alike, a package that no longer carries what the market needs.
+
 **This document holds no rules of its own.** Every row names a rule that lives in
 [plugin-conventions.md](plugin-conventions.md), gives it a tier, and names the file or script that judges
 it. "Is this actually enforced?" has an answer here rather than an opinion.
+
 **Who this is not for**: learning what to build (that is the conventions), working in one repository (that
 repository's `AGENTS.md`), running a release (that repository's `docs/PUBLISHING.md`).
+
 **What stays out**: arguments, trade-offs and post-mortems → [.agents/notes/](../.agents/notes/).
+
+Not every row binds every repository in this organization — the plugin, the organization and the market
+repositories each carry a different share. Which share is which is
+[the conventions' scope section](plugin-conventions.md), not this document.
 
 Three tiers. The last column of the table is not prose: it names the file or script that judges the row.
 
@@ -70,7 +77,7 @@ not be forced into alignment.
   `node scripts/scaffold.mjs check <repo>...` (SHA-256 of the template copy against each repository's
   same-named file). A mismatch is **not necessarily a defect** — it reports "know that it differs", not
   "force it to match". Which files are even candidates is `IDENTITY_FILES` in that script.
-- **Shapes** → read the criteria here; do not copy values from here.
+- **Shapes** → read them in [plugin-conventions.md](plugin-conventions.md) §1; do not copy values from it.
 - **A rule cannot live only in prose** → whatever can become an assertion becomes one (redline tests,
   `check:*` scripts); prose keeps pointers only.
 - **Contrastive descriptions ("A has it, B does not") go stale fastest** → they depend on both sides at

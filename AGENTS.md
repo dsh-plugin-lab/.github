@@ -74,7 +74,7 @@
 | 文件 | 它的身份 | 谁读它 |
 |---|---|---|
 | [README.md](README.md) | 本仓入口：GitHub 为什么会把这些文件放这儿 + **身份路由表** | 任何打开本仓的人 |
-| [docs/plugin-conventions.md](docs/plugin-conventions.md) · [中文](docs/plugin-conventions_zh.md) | **公约**：插件仓长什么样（第一节）、发出去的包必须带什么（第二节）。**不自带判定体** | 写插件的人；被注入进插件仓的 agent |
+| [docs/plugin-conventions.md](docs/plugin-conventions.md) · [中文](docs/plugin-conventions_zh.md) | **公约**：插件仓长什么样（§1）、发出去的包必须带什么（§2）、刻意不抽（§3）。**不自带判定体** | 写插件的人；被注入进插件仓的 agent |
 | [docs/criteria.md](docs/criteria.md) · [中文](docs/criteria_zh.md) | **判据**：公约每条规则定档 + 点名判定体。**不复述规则本身** | 判「这是不是缺陷」的人 |
 | [AGENTS.md](AGENTS.md) | **本仓特有**：命令、全局规则、活跃坑 | 在本仓干活的维护者与 agent |
 | [.agents/notes/](.agents/notes/)（结构见其 [README.md](.agents/notes/README.md)） | 决策与依据 —— 「为什么这样定」 | 要动判据的人 |
