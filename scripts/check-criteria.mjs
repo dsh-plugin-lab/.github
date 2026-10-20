@@ -187,14 +187,26 @@ const CHECKS = [
     criterion: 'One package manager only: pnpm, with pnpm-lock.yaml as the sole lockfile',
     group: 'lockfile',
     async run(repository) {
+      const { manifest, read, has } = repository
       const problems = []
-      if (await repository.read('pnpm-lock.yaml') === undefined) problems.push('pnpm-lock.yaml is missing')
-      // `package.json`'s lockfile peers only exist to reveal that a second manager was used. Probing
-      // for the ones that would be a defect costs three requests per repository that always 404 —
-      // so the probe is kept, because a rival lockfile appearing is exactly the silent case this
-      // rule exists for, but it is the only place that pays for an absence.
+      if (!(await has('pnpm-lock.yaml'))) problems.push('pnpm-lock.yaml is missing')
+
+      // The declared signal wins over probing: `packageManager` says what this repository is built
+      // with, and a second manager is then a contradiction to report rather than a file to hunt for.
+      // No repository has this field yet, so today the probe below is what actually runs — but the
+      // rule reads the declaration first, so adding the field later costs nothing here.
+      const declared = typeof manifest.packageManager === 'string' ? manifest.packageManager.split('@')[0] : undefined
+      if (declared && declared !== 'pnpm') problems.push(`packageManager declares ${declared}`)
+
+      // Absence is the answer to look for, so it is read from the tree the sweep already fetched:
+      // three rival lockfiles per repository, every week, is three 404s nobody should pay for.
       for (const rival of ['package-lock.json', 'yarn.lock', 'bun.lockb']) {
-        if (await repository.read(rival) !== undefined) problems.push(`${rival} is present as well`)
+        if (await has(rival)) problems.push(`${rival} is present as well`)
+      }
+
+      // A manifest that still points at a rival's lockfile is a second manager in everything but name.
+      if (await read('pnpm-lock.yaml') === undefined && !problems.some((problem) => problem.includes('pnpm-lock.yaml'))) {
+        problems.push('pnpm-lock.yaml could not be read')
       }
       return problems
     },

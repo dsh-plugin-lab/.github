@@ -44,6 +44,15 @@ export function memo() {
 }
 
 /**
+ * Statuses worth a second attempt.
+ *
+ * Deliberately a set, not a comparison: `4xx` is the server telling us the answer, and retrying it
+ * wastes time on every run forever. `429` is the exception — too many requests is an invitation to
+ * wait, not an answer. Everything else in `4xx` returns immediately.
+ */
+const RETRYABLE = new Set([408, 425, 429, 500, 502, 503, 504])
+
+/**
  * A GET with a bounded retry.
  *
  * The raw host is reached over one connection per file and an occasional reset is ordinary, not a
@@ -53,17 +62,43 @@ export function memo() {
 async function get(url, init, attempts = 3) {
   let last
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    let response
     try {
-      const response = await fetch(url, { ...init, signal: AbortSignal.timeout(30_000) })
-      // 5xx is worth another attempt; 4xx is the answer.
-      if (response.status < 500) return response
-      last = new Error(`HTTP ${response.status}`)
+      response = await fetch(url, { ...init, signal: AbortSignal.timeout(30_000) })
     } catch (error) {
       last = error
+      if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, attempt * 500))
+      continue
     }
-    if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, attempt * 500))
+    if (!RETRYABLE.has(response.status)) return response
+    last = new Error(`HTTP ${response.status}`)
+    if (attempt === attempts) return response
+    await new Promise((resolve) => setTimeout(resolve, attempt * 500))
   }
   throw last
+}
+
+/**
+ * Every path in a repository, as a set.
+ *
+ * One request, and afterwards "does this file exist" costs nothing. The alternative — asking for a
+ * file that is probably not there and reading a 404 — turns each *absence* into a round trip: the
+ * lockfile rule alone would probe three missing files per repository, every week, forever.
+ *
+ * A truncated tree (GitHub's answer for very large repositories) is reported rather than ignored,
+ * because a truncated tree would make absence check fail to be wrong: everything would look missing.
+ */
+async function treeOf(repository, branch, fetchOnce) {
+  const fullName = repository.full_name
+  return fetchOnce(`${fullName}/tree`, async () => {
+    const response = await get(`${API}/repos/${fullName}/git/trees/${branch}?recursive=1`, {
+      headers: apiHeaders(),
+    })
+    if (!response.ok) throw new Error(`listing the tree of ${fullName}: HTTP ${response.status}`)
+    const body = await response.json()
+    if (body.truncated) throw new Error(`the tree of ${fullName} is truncated; existence checks would be wrong`)
+    return new Set((body.tree ?? []).filter((entry) => entry.type === 'blob').map((entry) => entry.path))
+  })
 }
 
 /** Every public repository in an organization, following pagination. */
@@ -135,7 +170,18 @@ export async function discoverPlugins(org, { fetchOnce = memo() } = {}) {
     }
 
     const read = (path) => fetchOnce(`${fullName}/${path}`, () => fileOf(fullName, path, branch))
-    plugins.push({ name: repository.name, fullName, branch, manifest, read })
+    // Absence is answered from the tree where possible, so a rule about a file that should *not*
+    // exist does not pay a round trip to discover that it does not.
+    const has = async (path) => {
+      try {
+        return (await treeOf(repository, branch, fetchOnce)).has(path)
+      } catch (error) {
+        // A tree we cannot read degrades to a fetch: slower, but the answer is still true.
+        trace('discover', `tree unavailable for ${repository.name}: ${error.message}`)
+        return (await read(path)) !== undefined
+      }
+    }
+    plugins.push({ name: repository.name, fullName, branch, manifest, read, has })
   }
 
   plugins.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
