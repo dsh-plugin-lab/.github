@@ -7,12 +7,12 @@
   "dsh-plugin-debugging": {
     "file": "test/redlines.test.ts",
     "describe": 35,
-    "it": 121
+    "it": 123
   },
   "dsh-workbuddy-bridge": {
     "file": "tests/redlines.spec.ts",
     "describe": 12,
-    "it": 43
+    "it": 44
   },
   "dsh-zhihu-search": {
     "file": "test/redlines.test.ts",

@@ -58,13 +58,13 @@
 ## 待办
 
 - [ ] 平台侧设置（私密漏洞报告、ruleset、Discussions）由人工在设置界面开启，不属 agent 范围。
-- [ ] **`dsh-workbuddy-bridge` 有两条判据没有执行体**（`check-criteria.mjs` 实测）：判据文档写着
-  「peer 与 dev 版本逐条相等」「四个编译器开关各管一层」，该仓的红线文件里都没有对应断言，
-  且实测三处 peer/dev 版本不一致（`@deepseek-ai/cordis`、`@deepseek-ai/schemastery`、`react-dom`）。
+- [ ] **`dsh-workbuddy-bridge` 的「四个编译器开关各管一层」仍没有执行体**：判据是 **Should agree** 档，
+  那几个开关在 `tsconfig.json` 与 `tsconfig.client.json` 里都在（`strict` / `noUncheckedIndexedAccess` /
+  `noFallthroughCasesInSwitch` / `noUnusedLocals`），缺的是「该仓自己断言它们还在」这一层 ——
+  开关被谁删掉时没有任何东西会红。
+  （同一条待办里的「peer 与 dev 版本逐条相等」已于 2026-10-20 处理：三处漂移修掉并补了红线断言，
+  决策记录在该仓 `.agents/notes/2026-10-20-peer-dev-version-agreement.md`。）
   二选一：补断言，或把判据那一行的档位/措辞改成与现状一致。
-- [ ] **`dsh-plugin-debugging` 的 `files` 列了整个 `assets/` 目录**（再按名排除两张图）。
-  判据要求「新截图不该悄悄进包」，现在新增一张图仍会进包。要么改成逐文件列举运行期资产，
-  要么改判据承认这种写法。
 
 ## 活跃坑
 
