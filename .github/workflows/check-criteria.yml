@@ -58,8 +58,9 @@ jobs:
         run: node scripts/check-criteria.mjs
         continue-on-error: true
 
-      # One issue, fixed title, updated in place: the same failure does not get a fresh comment every
-      # week, and a green run closes it rather than leaving a stale red thread.
+      # One issue, fixed title, **edited in place**: the same failure must not add a comment every
+      # week, or the thread becomes a weekly heartbeat nobody reads. A green run closes it, so an
+      # open issue always means "this is still broken".
       - name: Report
         if: always()
         env:
@@ -69,19 +70,18 @@ jobs:
         run: |
           set -euo pipefail
           title='Criteria: a rule is no longer held by anything'
+          number=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
 
           if [ "$OUTCOME" = 'success' ]; then
-            number=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
             if [ -n "$number" ]; then
               gh issue close "$number" --comment "The criteria hold again as of $RUN_URL."
             fi
             exit 0
           fi
 
-          body=$(printf 'The scheduled check found that a criterion in `docs/criteria.md` no longer holds.\n\nSee the run for the itemised report: %s\n\nThis issue is updated in place — the same failure does not get a new comment each week. It closes on its own when the check goes green.\n\nIf the change was deliberate, update `docs/criteria.md` and `redlines-baseline.json` in the same pull request, so the document and the check agree again.\n' "$RUN_URL")
-          number=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
+          body=$(printf 'The scheduled check found that a criterion in `docs/criteria.md` no longer holds.\n\nLast failing run: %s\n\nThe report is in that run log. This issue is edited in place rather than commented on, so an open issue means "still failing"; it closes on its own when the check goes green.\n\nIf the change was deliberate, update `docs/criteria.md` and `redlines-baseline.json` in the same pull request, so the document and the check agree again.\n' "$RUN_URL")
           if [ -n "$number" ]; then
-            gh issue comment "$number" --body "$body"
+            gh issue edit "$number" --body "$body"
           else
             gh issue create --title "$title" --body "$body"
           fi
