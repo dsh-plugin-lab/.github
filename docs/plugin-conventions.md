@@ -7,7 +7,7 @@ what that repository must look like — what the scaffold lays down, which parts
 what the published package has to carry.
 
 **Who this is not for**: judging whether a difference is a **defect**. That is
-[criteria.md](criteria.md): it gives each rule above a tier and names the file or script that judges it.
+[criteria.md](criteria.md): it gives each rule here a tier and names the file or script that judges it.
 Working in one repository (that repository's `AGENTS.md`), contributing (the organization's
 `CONTRIBUTING.md`) and running a release (that repository's `docs/PUBLISHING.md`) are their own documents.
 
@@ -15,12 +15,12 @@ Working in one repository (that repository's `AGENTS.md`), contributing (the org
 document keeps the shape, one line of intent each, reopening conditions, and pointers.
 
 Three sections: **the shape a repository has** (§1), **what a published package must carry** (§2), and
-**the two things deliberately left per repository** (§3). A fourth says who they bind.
+**the two things deliberately left per repository** (§3).
 
-## Who this binds
+## What this covers
 
-Three sections above, one kind of repository: the **plugin repository** — one per plugin, one npm package
-that is also a DSH bundle. The other two repositories in this organization are outside it:
+All three bind one kind of repository: the **plugin repository** — one per plugin, one npm package that is
+also a DSH bundle. The other two repositories in this organization are outside them:
 
 - **The organization repository** (`dsh-plugin-lab/.github`) publishes nothing; what it holds and why is its
   own [README.md](../README.md).
@@ -33,6 +33,7 @@ questions decide where a piece of content belongs, in this order:
 1. **Can the mechanism fall back?** If yes → the organization repository (its `.github`), and no plugin
    repository changes a line.
 2. **Otherwise** → the repository that owns it, with the shape recorded here.
+
 ## 1. The shape the scaffold generates
 
 **This is a target, not a claim of uniformity.** What follows is what `node scripts/scaffold.mjs`
@@ -76,7 +77,7 @@ The file is [the template's dependabot.yml](../templates/plugin/_common/.github/
 
 ### 1.3 Draft releases
 
-The **workflow** is one per repository and, measured across the four, byte-identical:
+The **workflow** is one per repository, and byte-identical across all four — measured, not assumed:
 
 The file is [the template's release-drafter.yml](../templates/plugin/_common/.github/workflows/release-drafter.yml).
 
@@ -203,7 +204,7 @@ the four below). Those four are the behavioural floor:
 | Floor | Criterion |
 |---|---|
 | **Both entry points, manual and tag** | A tag trigger carries its own gate: the tag name must equal `v` plus the manifest version |
-| **The release body reads the Drafter draft** | Falls back to `--generate-notes` when the draft cannot be read or is empty, and **must warn when it cannot be read** |
+| **The release notes read the Drafter draft** | Falls back to `--generate-notes` when the draft cannot be read or is empty, and **must warn when it cannot be read** |
 | **The draft is retired afterwards** | The one whose tag does not start with `v`; no formal release is touched |
 | **npm publishing goes through OIDC** | No token at any point; the cost is one Trusted Publisher configured on npm |
 
@@ -216,7 +217,7 @@ Four things that are easy to miss, and all four fail **silently**:
   `refs/tags/...` on a tag trigger and every tag-triggered release goes red.
 - **Check that the Release does not already exist before creating it.** Without that idempotency a re-run
   collides with the existing tag and goes red.
-- **Clean the draft body by matching the action's own line, not the full wording of the notice.** That
+- **Strip the draft by matching the action's own line, not the full wording of the notice.** That
   wording belongs to the organization template; copying it verbatim is a sed that fails silently the
   moment it changes.
 
@@ -305,7 +306,7 @@ condition — without one, the next person cannot tell a decision from an oversi
   Reasoning → [decision: workflow copies are not extracted](../.agents/notes/2026-10-12-workflow-copies-not-extracted.md).
 - **The scaffold seeds; it does not synchronise**: `scripts/scaffold.mjs` + `templates/plugin/` lay down a
   new repository's skeleton **once** and never write back into an existing repository. Its `check`
-  subcommand is the execution body of the byte-identity criterion; `--verify` generates into a scratch
+  subcommand is what actually executes the byte-identity criterion; `--verify` generates into a scratch
   directory and runs the generated repository's own checks, which is what accepts a template edit.
   Reopening condition: a template change that has to reach existing repositories — that is a migration,
   not a seed, and it needs its own decision.
@@ -318,7 +319,8 @@ host's official sources), assertions are written per repository, accepting two-w
 
 ## Where this sits
 
-- **Is this a defect?** → [criteria.md](criteria.md): every rule above has a tier and a judging file.
+- **Is this a defect?** → [criteria.md](criteria.md): every rule here has a tier, and a file or script that
+  judges it.
 - **Building a new repository** → the scaffold, not this document:
   `node scripts/scaffold.mjs <dir> --verify`
 - **What the organization repository itself holds** → its [README.md](../README.md)

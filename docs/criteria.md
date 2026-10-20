@@ -24,10 +24,10 @@ Three tiers. The last column of the table is not prose: it names the file or scr
 | Tier | Meaning |
 |---|---|
 | **Must agree** | a disagreement is a defect and has to become a check |
-| **Should agree** | the decision logic is shared, the parameters are per repository |
+| **Should agree** | the decision logic is shared; the parameters are per repository |
 | **Capability optional** | the rule genuinely does not apply — **not** that it was switched off |
 
-| Rule | Tier | Where it lands |
+| Rule | Tier | What judges it |
 |---|---|---|
 | A published package carries the four inputs of the conventions (§2) | Must agree | `check:release` per repository (it asserts what the tarball and manifest contain); the market's diagnostics make an omission visible |
 | A published package does **not** carry the images only the README shows: they live in the repository and are referenced relatively | Must agree | a redline assertion per repository — the exclusion entries present, the README using relative paths, the runtime assets still in the package |
@@ -41,7 +41,7 @@ Three tiers. The last column of the table is not prose: it names the file or scr
 | Release-state invariants | Must agree | `check:release` per repository (the template ships one; repositories **append** and drop nothing); a pure host plugin may be exempt from the `files` item, **the host compatibility range must not be** |
 | The release flow must **not** bump the version | Must agree | `findVersionWrites` inside `check:release`, **with a negative control**. Bumping is its own step before a release |
 | **Both manual and tag can trigger**, and on a tag trigger the baseline excludes the tag being released | Must agree | an assertion in each repository's release flow |
-| **The body reads the Drafter draft** and **the draft is retired afterwards**, with a **warning when it cannot be read** | Must agree | an assertion in each repository's release flow. Without the warning, "the release succeeded but the body came from the fallback" is a silent failure |
+| **The release notes read the Drafter draft** and **the draft is retired afterwards**, with a **warning when it cannot be read** | Must agree | an assertion in each repository's release flow. Without the warning, "the release succeeded but its notes came from the fallback" is a silent failure |
 | **npm publishing goes through OIDC**, no token at any point | Must agree | each repository's release flow; the prerequisite is a Trusted Publisher on npm (done by a human, no template can carry it) |
 | Before releasing, confirm the commit to release is already on the **remote** | Must agree | the "before you release" section of each repository's `docs/PUBLISHING.md` |
 | A release must produce git-side artifacts of the **same shape** (tag shape, Release exists, pre-release marked) | Must agree | an assertion in each repository's release flow. The tag name is read by **a machine** (the guard uses `git describe --match`), so it is not pure aesthetics |
@@ -73,7 +73,7 @@ not be forced into alignment.
 
 ## How to check
 
-- **Byte-identical copies** → compare bytes, not meaning. Execution body:
+- **Byte-identical copies** → compare bytes, not meaning. What executes that check:
   `node scripts/scaffold.mjs check <repo>...` (SHA-256 of the template copy against each repository's
   same-named file). A mismatch is **not necessarily a defect** — it reports "know that it differs", not
   "force it to match". Which files are even candidates is `IDENTITY_FILES` in that script.
