@@ -1,108 +1,26 @@
-# Repository conventions
+# Plugin repository conventions
 
 [English](plugin-conventions.md) | [中文](plugin-conventions_zh.md)
 
-**Who this is for**: you are looking at a repository in this organization and you need to know whether
-something is a **defect** — a pull request that changes the version, a release that reads the wrong
-thing, two repositories that stopped looking alike, a plugin whose published package no longer carries
-what the market needs. **Section 5 is the operative part**: it is short, and its last column says which
-script judges each rule. Start there.
-**Who this is not for**: how to work in one repository (that repository's `AGENTS.md`), how to contribute
-(this organization's `CONTRIBUTING.md`), how a release actually runs (that repository's
-`docs/PUBLISHING.md`), how to check this organization repository (its `AGENTS.md`).
+**Who this is for**: you are writing a plugin in this organization, new or existing, and you need to know
+what that repository must look like — what the scaffold lays down, which parts are not negotiable, and
+what the published package has to carry.
+**Who this is not for**: judging whether a difference is a **defect**. That is
+[criteria.md](criteria.md): it gives each rule above a tier and names the file or script that judges it.
+Working in one repository (that repository's `AGENTS.md`), contributing (the organization's
+`CONTRIBUTING.md`) and running a release (that repository's `docs/PUBLISHING.md`) are their own documents.
 **What stays out**: arguments, trade-offs and post-mortems → [.agents/notes/](../.agents/notes/). This
-document keeps criteria, one line of intent each, reopening conditions, how to check, and pointers.
+document keeps the shape, one line of intent each, reopening conditions, and pointers.
 
-## Three kinds of repository
+Three sections: **the shape a repository has** (§1), **what a published package must carry** (§2), and
+**the two things deliberately left per repository** (§3).
 
-Two layers, and a rule only applies to the layer it is about.
-
-| Kind | What it produces | Which sections apply |
-|---|---|---|
-| **Plugin repository** — one per plugin | one npm package, which is also a DSH bundle | all of them |
-| **Organization repository** (`dsh-plugin-lab/.github`) | nothing is published; it supplies fallback files and seeds new repositories | §1, §2, and the hygiene rows of §5 |
-| **Market** (`dsh-plugin-lab/market`) | a generated index served from GitHub Pages; no package, no version | §1, §2, §4 as *consumer*, and the hygiene rows of §5 |
-
-Intent: the organization repository and the market are **management-layer facilities** — they exist
-because there are plugins, not as plugins. That is why they are outside §3's plugin shapes and §6's
-release floors: applying those to a repository that publishes nothing would invent obligations nobody
-can meet. They are still repositories in this organization, so everything about how a repository is
-kept — fallbacks, CI, hooks, formatting, frozen installs — applies to them unchanged.
-
-To decide where a file belongs, ask three questions in order:
-
-1. **Does the mechanism support a fallback?** If yes → keep it in the organization repository (its
-   `.github`), and no plugin repository changes a line.
-2. **Is the content generic, but the mechanism has no fallback?** → independent per repository, with the
-   shape recorded here.
-3. **Is the content specific to one repository?** → independent per repository; this document does not
-   concern itself.
-
----
-
-## 1. What can fall back: the organization repository
-
-GitHub reads these files only from the locations the platform supports, and **a repository with a file
-of its own uses its own**. A new repository inherits them with no commit anywhere.
-
-| File | Where | Applies to |
-|---|---|---|
-| `SECURITY.md` | repository root | repositories that do not ship their own |
-| `CODE_OF_CONDUCT.md` | repository root | as above |
-| `SUPPORT.md` | repository root | as above |
-| `CONTRIBUTING.md` | repository root | as above |
-| `PULL_REQUEST_TEMPLATE.md` | repository root | as above |
-| `.github/ISSUE_TEMPLATE/*.yml` | **must be in `.github/ISSUE_TEMPLATE/`** | as above; once a repository creates that directory, these templates stop applying to it **altogether** |
-| `.github/release-drafter.yml` | organization repository | repositories that do not ship a config of their own |
-| `profile/README.md` | `profile/` | the organization profile page; not a fallback mechanism |
-
-Four criteria that follow from the mechanism:
-
-- **Issue templates must be under `.github/ISSUE_TEMPLATE/`** — at a repository root they do nothing;
-  only that path is recognized. Symptom: a new issue offers nothing but a blank one, **with no error**.
-- **There is no localization mechanism** — names such as `CONTRIBUTING_en.md` are not recognized.
-  Bilingual means both languages in one file, not a second file.
-- **The fallback happens only when the repository has no file of that name** — when repositories already
-  carry their own `CONTRIBUTING.md`, the organization copy is never shown; it serves **repositories
-  created later**.
-- **The private-reporting entry described by `SECURITY.md`** is each repository's **Security → Report a
-  vulnerability**, enabled per repository (**private repositories do not need it**: they are private
-  already).
-
----
-
-## 2. Generic but not extracted
-
-**`workflow` files are explicitly not extracted**: no `workflow_call`; each repository carries its own
-copy, held together by **shape**, not by bytes.
-
-- **Intent**: one edit in the organization would otherwise change every repository at once — invisibly,
-  since it appears in no repository's diff — and would cost a layer of cross-repository debugging.
-- **Byte-identity is the exception, not the rule.** Only the draft-release workflow is required to be
-  identical; `ci.yml`, `release.yml` and `compat.yml` are held together by **shape**, with
-  per-repository parameters (job matrices, extra legs, repository-specific steps). Which files are even
-  candidates is `IDENTITY_FILES` in `scripts/scaffold.mjs` — not prose, and not this document.
-- **Reopening condition**: six or more plugin repositories, or a workflow that grows real branching
-  logic and per-repository parameters.
-- Reasoning and the rejected alternatives → [decision: workflow copies are not extracted](../.agents/notes/2026-10-12-workflow-copies-not-extracted.md).
-
-**A scaffold seeds; it does not synchronise**: `scripts/scaffold.mjs` + `templates/plugin/` lay down a
-new repository's skeleton **once** and never write back into an existing repository. Its `check`
-subcommand is the execution body for the byte-identity criterion; `--verify` generates into a scratch
-directory and runs the generated repository's own checks, which is what accepts a template edit.
-Reasoning → [decision: the scaffold seeds, it does not sync](../.agents/notes/2026-10-12-scaffold-seeds-not-syncs.md).
-
-**Carrier status**: no shared package and no extracted copies. Knowledge travels as pointers (the host's
-official sources); assertions are written per repository, accepting two-way sync.
-
----
-
-## 3. The shape the scaffold generates
+## 1. The shape the scaffold generates
 
 **This is a target, not a claim of uniformity.** What follows is what `node scripts/scaffold.mjs`
-produces and why; §3.9 lists the places where the four existing repositories legitimately differ from
+produces and why; §1.9 lists the places where the four existing repositories legitimately differ from
 it. A repository that matches the shape is not thereby correct, and one that differs is not thereby a
-defect — what must agree is in §5.
+defect — what must agree is in [criteria.md](criteria.md).
 
 **For a new repository, the shape is not copied from here**: the scaffold seeds it
 (`node scripts/scaffold.mjs <dir>`, then `--verify` runs the generated repository's own checks). Read
@@ -111,7 +29,7 @@ differ** — not to transcribe it.
 **For an existing repository, this is the reference**: what the shape is, and the parts that are not
 negotiable.
 
-### 3.1 The CI closing job
+### 1.1 The CI closing job
 
 The last job in each repository's `ci.yml`: it lets the ruleset watch a single status-check name, so
 inner jobs can be added or removed without touching the ruleset.
@@ -125,66 +43,23 @@ Four things that cannot move:
 - **`if: always()`** — otherwise an upstream failure skips the closing job itself.
 - **`skipped` goes red alongside `failure` and `cancelled`** — a job that never ran must not pass.
 
-```yaml
-  ci-success:
-    name: CI Success
-    runs-on: ubuntu-latest
-    needs: [<all job ids in this file>]
-    if: always()
-    steps:
-      - name: Verify all jobs succeeded
-        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
-        run: |
-          echo "::error::some job did not succeed — CI Success goes red"
-          echo '${{ toJSON(needs) }}'
-          exit 1
-```
+The job itself is in [the template's ci.yml](../templates/plugin/_common/.github/workflows/ci.yml) —
+one place, not a copy here.
 
 The ruleset's `required_status_checks` names `CI Success` and nothing else.
 
-### 3.2 Dependency drift patrol
+### 1.2 Dependency drift patrol
 
 Only the `github-actions` ecosystem. Intent: most npm dependencies in this family sit on the host's
 pre-release line, so automatic pull requests would only be noise.
 
-```yaml
-version: 2
-updates:
-  - package-ecosystem: github-actions
-    directory: '/'
-    schedule:
-      interval: weekly
-      day: monday
-    commit-message:
-      prefix: ci
-    groups:
-      actions:
-        patterns: ['*']
-```
+The file is [the template's dependabot.yml](../templates/plugin/_common/.github/dependabot.yml).
 
-### 3.3 Draft releases
+### 1.3 Draft releases
 
 The **workflow** is one per repository and, measured across the four, byte-identical:
 
-```yaml
-name: release-drafter
-
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-jobs:
-  update-draft:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: release-drafter/release-drafter@v7
-```
+The file is [the template's release-drafter.yml](../templates/plugin/_common/.github/workflows/release-drafter.yml).
 
 - **The runner must be pinned to ubuntu**. Intent: on a windows runner the action cannot find its config
   file, the draft comes out silently empty and **nothing errors** (the action's major version follows
@@ -206,7 +81,7 @@ The **config** splits into two layers that do not land in the same place:
 reads the draft by that tag. Changing it is not a config edit, it is a change to every flow that reads
 it.
 
-### 3.4 The package manager and the build
+### 1.4 The package manager and the build
 
 The family has **exactly one package manager**: pnpm, with `pnpm-lock.yaml` as the only lockfile. No
 repository carries a second one; a script that clears install state clears `pnpm-lock.yaml` and nothing
@@ -221,16 +96,16 @@ else, because there is nothing else to clear.
   `cache: pnpm` without a store.
 - **The local hook runs `pnpm exec`, not `npx`**, and carries `--config.verify-deps-before-run=false`.
   Intent: it borrows what the tree already has and downloads nothing.
-- **The builder is per repository** (§3.9). The scaffold ships `tsdown` with two configurations in
+- **The builder is per repository** (§1.9). The scaffold ships `tsdown` with two configurations in
   `tsdown.config.ts` (host half ESM, browser half a CJS envelope, the browser half's CSS Modules as a
   plugin of that file); a repository may instead run the compiler directly and build the browser half
   with a script. Both satisfy the criteria; the scaffold's choice is the one a new repository starts
   from.
 
-### 3.5 TypeScript and the test skeleton
+### 1.5 TypeScript and the test skeleton
 
 - One tsconfig per compilation target, and separate vitest configs for day-to-day and contract tests. The
-  **counts differ per repository** (§3.9); what must agree is that the contract cases are excluded from
+  **counts differ per repository** (§1.9); what must agree is that the contract cases are excluded from
   the day-to-day run and that the contract config runs on its own (no parallelism, relaxed timeout).
 - `strict` is mandatory. Compiler switches own types and dead code; ESLint owns the layer the compiler
   does not cover (formatting, hooks, promises, imports) — **the division of labour is the same across
@@ -243,7 +118,7 @@ else, because there is nothing else to clear.
   what is there and what to change; a fact has exactly one home, and cross-file mentions are pointers
   only.
 
-### 3.6 Release-state guards and the compatibility patrol
+### 1.6 Release-state guards and the compatibility patrol
 
 - **Release-state invariants** become a `check:release` script, run by the release flow **before**
   publish. The scaffold template ships one, so a new repository satisfies this criterion the day it is
@@ -272,10 +147,10 @@ else, because there is nothing else to clear.
   edited the cron, so it cannot be the main notification — a failure must open or update a tracking
   issue with a **fixed title** (the same failure does not get a fresh comment every time).
 
-### 3.7 The plugin icon
+### 1.7 The plugin icon
 
 One `icon.svg` at the package root, declared as `"icon": "./icon.svg"`, and shipped in the package's
-`files` (§4).
+`files` (§2).
 
 - **Canvas 36×36**: `viewBox="0 0 36 36"`, and `width` / `height` agree with it.
 - **Transparent background**: `fill="none"` on `<svg>`, and **no rectangle covering the canvas**. Intent:
@@ -301,7 +176,7 @@ One `icon.svg` at the package root, declared as `"icon": "./icon.svg"`, and ship
 - Accepted formats and the size ceiling are the **host's** limits, not ours — take them from the host's
   own plugin reference rather than copying them here.
 
-### 3.8 The release flow
+### 1.8 The release flow
 
 The implementation is **each repository's own** (the template ships a reference implementation meeting
 the four below). Those four are the behavioural floor:
@@ -333,12 +208,12 @@ so no template can carry them — each repository's `docs/PUBLISHING.md` states 
 
 **A publish can fail for reasons no file can fix.** The one seen in practice: an expired Trusted
 Publisher binding makes the OIDC exchange return 404, and the package silently stays on its previous
-version. That is why §4 asks that a merged version reach npm, and why the market reports the drift: the
+version. That is why §2 asks that a merged version reach npm, and why the market reports the drift: the
 gap between "merged" and "published" is invisible from inside the repository.
 
-### 3.9 Where repositories legitimately differ
+### 1.9 Where repositories legitimately differ
 
-Same shape, different parameters or counts. None of these is a defect on its own; §5 is what must agree.
+Same shape, different parameters or counts. None of these is a defect on its own; [criteria.md](criteria.md) is what must agree.
 
 | What may differ | Why it is allowed |
 |---|---|
@@ -347,7 +222,7 @@ Same shape, different parameters or counts. None of these is a defect on its own
 | Number of `vitest` configs: two where contract tests exist, one where they do not | the contract config exists to run them apart |
 | `compat.yml`: legs, targets, blocking versus record-only | the declared families differ per repository's history |
 | `ci.yml` / `release.yml`: jobs, matrices, steps | nothing cross-repository reads them but the closing-job rule |
-| **Not** the draft-release workflow | it must be identical (§2) |
+| **Not** the draft-release workflow | it must be byte-identical (§3, and the check is named in [criteria.md](criteria.md)) |
 
 **Do not record the current values here.** How many of each, and which builder a given repository uses,
 are facts that change without this document — read them from the repository, or compare with
@@ -355,7 +230,7 @@ are facts that change without this document — read them from the repository, o
 
 ---
 
-## 4. What a published package must carry
+## 2. What a published package must carry
 
 The market reads the **published artifact**, never a checkout, so anything it needs has to survive into
 the tarball and the registry manifest. A plugin that omits these still installs — but its market entry
@@ -399,90 +274,35 @@ This section states the **obligation**; that document is the **contract**. Neith
 
 ---
 
-## 5. Criteria, item by item (cross-repository consistency)
+---
 
-**This is the section to act on.** The last column is not prose: it names the file or script that judges
-the rule, so "is this actually enforced?" has an answer rather than an opinion. Everything in sections 1–4
-explains *why* a row below holds; nothing here needs to be read in order.
+## 3. Deliberately not extracted
 
-The three tiers:
+Two things this family keeps per repository on purpose. Both are rules, and both carry a reopening
+condition — without one, the next person cannot tell a decision from an oversight.
 
-| Tier | Meaning |
-|---|---|
-| **Must agree** | a disagreement is a defect and has to become a check |
-| **Should agree** | the decision logic is shared, the parameters are per repository |
-| **Capability optional** | the rule genuinely does not apply — **not** that it was switched off |
+- **Workflows are not extracted**: no `workflow_call`. Each repository carries its own copy, held together
+  by **shape**, not by bytes. Byte-identity is the exception and it is enumerated, not implied: the list is
+  `IDENTITY_FILES` in `scripts/scaffold.mjs`, never prose. Reopening condition: six or more plugin
+  repositories, or a workflow that grows real branching logic and per-repository parameters.
+  Reasoning → [decision: workflow copies are not extracted](../.agents/notes/2026-10-12-workflow-copies-not-extracted.md).
+- **The scaffold seeds; it does not synchronise**: `scripts/scaffold.mjs` + `templates/plugin/` lay down a
+  new repository's skeleton **once** and never write back into an existing repository. Its `check`
+  subcommand is the execution body of the byte-identity criterion; `--verify` generates into a scratch
+  directory and runs the generated repository's own checks, which is what accepts a template edit.
+  Reopening condition: a template change that has to reach existing repositories — that is a migration,
+  not a seed, and it needs its own decision.
+  Reasoning → [decision: the scaffold seeds, it does not sync](../.agents/notes/2026-10-12-scaffold-seeds-not-syncs.md).
 
-| Rule | Tier | Where it lands |
-|---|---|---|
-| A published package carries the four inputs of §4 | Must agree | `check:release` per repository (it asserts what the tarball and manifest contain); the market's diagnostics make an omission visible |
-| A published package does **not** carry the images only the README shows: they live in the repository and are referenced relatively | Must agree | a redline assertion per repository — the exclusion entries present, the README using relative paths, the runtime assets still in the package |
-| A merged version reaches npm | Must agree | the post-release check in each repository's `docs/PUBLISHING.md`; detected org-wide by the market's drift report |
-| Every declared host family is judged by the patrol | Must agree | `scripts/check-declaration.mjs` per repository, printing a count per line |
-| The lockfile's `resolved` must point at the official registry | Must agree | a redline assertion per repository (the count is computed, never copied into a document) |
-| **One package manager only: pnpm**, with `pnpm-lock.yaml` as the sole lockfile | Must agree | stated in the template; a migrated repository's `.prettierignore` falls into place under `scaffold check` |
-| A missing peer → fail; missing dev only → warn and skip | Should agree | shared decision logic (**default fail**); which host line it follows is per repository |
-| peer and dev versions must agree | Must agree | a redline assertion per repository |
-| The four compiler switches and ESLint each own their layer | Should agree | redlines per repository guard that the switches exist; **the switch values stay in `tsconfig.json`**, tool parameters are per repository |
-| Release-state invariants | Must agree | `check:release` per repository (the template ships one; repositories **append** and drop nothing); a pure host plugin may be exempt from the `files` item, **the host compatibility range must not be** |
-| The release flow must **not** bump the version | Must agree | `findVersionWrites` inside `check:release`, **with a negative control**. Bumping is its own step before a release |
-| **Both manual and tag can trigger**, and on a tag trigger the baseline excludes the tag being released | Must agree | an assertion in each repository's release flow |
-| **The body reads the Drafter draft** and **the draft is retired afterwards**, with a **warning when it cannot be read** | Must agree | an assertion in each repository's release flow. Without the warning, "the release succeeded but the body came from the fallback" is a silent failure |
-| **npm publishing goes through OIDC**, no token at any point | Must agree | each repository's release flow; the prerequisite is a Trusted Publisher on npm (done by a human, no template can carry it) |
-| Before releasing, confirm the commit to release is already on the **remote** | Must agree | the "before you release" section of each repository's `docs/PUBLISHING.md` |
-| A release must produce git-side artifacts of the **same shape** (tag shape, Release exists, pre-release marked) | Must agree | an assertion in each repository's release flow. The tag name is read by **a machine** (the guard uses `git describe --match`), so it is not pure aesthetics |
-| The host compatibility declaration must be **self-consistent**, and the **whole string** is comparable across repositories | Must agree | redlines per repository (self-consistency); the string itself is compared by reading each published manifest. Whether the strings agree today is a fact to re-measure, never a value to copy here |
-| The criterion for a dependency's category is "**our relationship to it**": `import type` only → `devDependencies`; **consuming a service it provides** → `peerDependencies` | Must agree | each repository's `AGENTS.md`. When the criterion and the current state disagree, the next person deletes it by the rule |
-| The tier of TypeScript's strict switches (`strict` / indexed access / optional properties) | Should agree | the **process** is shared: before enabling any switch, count the sites with the **real config** (not a CLI override), and enabling two at once must be tested separately; **the parameters are per repository**, with no cross-repository snapshot |
-| Patrol items that "record but do not block" | Must agree | they must carry a reason, or a green run hides a real problem |
-| Diagnostic steps (for example dumping the credential declaration at release time) | — | they are materialisation: **local to the workflow**, not extracted |
-| Path-conflict assertions | — | **not written**: equivalent protection already exists, and a second copy is duplication |
-| How CSS is injected, whether a stylesheet exists | Capability optional | per repository: the rule itself does not apply |
-| The drafter's **category → label mapping** | Should agree | the organization copy is a **default**; labels are repository metadata and are set per repository |
-| A client `inject` lists real dependencies only | Must agree | use the official bundled validator rather than writing prose |
-| How links are written: **same repository → relative path**; **another repository (same organization or not) → absolute URL**; always `[]()`, never `<URL>` and never a bare URL. A URL that is a **value** rather than a reference goes in inline code | Must agree | each repository's `AGENTS.md`; files rendered on the organization profile page are the exception (their links must be absolute — see that repository's `AGENTS.md`) |
-
-**Two kinds of content, governed apart**:
-
-- **Assertions** (wrong = CI goes red on the spot, **loud**) — first.
-- **Knowledge** (wrong = someone reads a stale guide, **quiet**) — the same batch, but not a redline.
-
-**One fallback criterion**: when a repository cannot get past upstream's **type surface**, it **may stop
-on the line that still builds** — building beats following the line. This does not conflict with the
-criteria above: those say the declaration must be self-consistent with the line being recommended, while
-this says the self-consistent target may be the lower line. Repositories stopping on different lines need
-not be forced into alignment.
-
-**Why the criteria live here rather than in one of the repositories** → [decision: cross-repository criteria live in the organization repository](../.agents/notes/2026-10-12-criteria-live-in-the-org-repo.md).
+**No shared package and no extracted copies** follow from the two above: knowledge travels as pointers (the
+host's official sources), assertions are written per repository, accepting two-way sync.
 
 ---
 
-## 6. How to check
+## Where this sits
 
-- **Byte-identical copies** → compare bytes, not meaning. Execution body:
-  `node scripts/scaffold.mjs check <repo>...` (SHA-256 of the template copy against each repository's
-  same-named file). A mismatch is **not necessarily a defect** — it reports "know that it differs", not
-  "force it to match". Which files are even candidates is `IDENTITY_FILES` in that script.
-- **Shapes** → read the criteria here; do not copy values from here.
-- **A rule cannot live only in prose** → whatever can become an assertion becomes one (redline tests,
-  `check:*` scripts); prose keeps pointers only.
-- **Contrastive descriptions ("A has it, B does not") go stale fastest** → they depend on both sides at
-  once; before acting, re-check the original source.
-- **The management-layer repositories check themselves**: the organization repository has no CI and is
-  checked by hand (its `AGENTS.md`); the market has its own workflow, tests and diagnostics baseline (its
-  `AGENTS.md`). No row in §5 asks either of them to satisfy a plugin's obligations.
-
----
-
-## Where this document sits
-
-| You are | Read |
-|---|---|
-| Judging whether something is a defect here | **section 5**, and the file named in its last column |
-| Checking what a plugin's published package must carry | **section 4**, then the market's [market-format.md](https://github.com/dsh-plugin-lab/market/blob/main/docs/market-format.md) for field semantics |
-| Building a **new** plugin repository | the scaffold, not this document: `node scripts/scaffold.mjs <dir> --verify` |
-| Working **in** one plugin repository | that repository's `AGENTS.md` |
-| Working **in** the market | that repository's `AGENTS.md` and `docs/ARCHITECTURE.md` |
-| Running a release in one plugin repository | that repository's `docs/PUBLISHING.md` |
-| Contributing code | this organization's [CONTRIBUTING.md](../CONTRIBUTING.md) |
-| Maintaining **this** organization repository | its [AGENTS.md](../AGENTS.md) |
+- **Is this a defect?** → [criteria.md](criteria.md): every rule above has a tier and a judging file.
+- **Building a new repository** → the scaffold, not this document:
+  `node scripts/scaffold.mjs <dir> --verify`
+- **What the organization repository itself holds** → its [README.md](../README.md)
+- **Why a rule reads the way it does** → [.agents/notes/](../.agents/notes/)

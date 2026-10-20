@@ -35,6 +35,7 @@ repository's own business; the family only fixes how a draft is turned into a bo
 - Design → [docs/](docs/)
 - Decisions and their evidence → [.agents/notes/](.agents/notes/)
 - Cross-repository conventions → [plugin-conventions](https://github.com/dsh-plugin-lab/.github/blob/main/docs/plugin-conventions.md)
+- Whether something counts as a defect → [criteria](https://github.com/dsh-plugin-lab/.github/blob/main/docs/criteria.md)
 
 ## To do
 

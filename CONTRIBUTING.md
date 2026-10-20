@@ -8,7 +8,7 @@ what it deliberately will not do — lives in that repository's own `AGENTS.md`,
 **Which one wins.** For *how a repository is worked in*, the repository wins: its
 commands, its test layout and its release procedure are its own. For *what must be
 true across every repository in this organization*, it does not: those invariants
-are listed in [docs/plugin-conventions.md](docs/plugin-conventions.md), and a
+are listed in [docs/plugin-conventions.md](docs/plugin-conventions.md) and [docs/criteria.md](docs/criteria.md), and a
 repository that disagrees with one is wrong, not an exception.
 
 ## Where things are written down
@@ -19,7 +19,8 @@ file points rather than repeats.
 | You want to know | Read |
 |---|---|
 | How to build, test and work in **this** repository | that repository's `AGENTS.md` |
-| What is the same across every repository, and what must be true | [docs/plugin-conventions.md](docs/plugin-conventions.md) |
+| What a plugin repository must look like | [docs/plugin-conventions.md](docs/plugin-conventions.md) |
+| Whether something counts as a defect | [docs/criteria.md](docs/criteria.md) |
 | Why a decision was made, and what it ruled out | that repository's `.agents/notes/` |
 | How a release actually happens | that repository's `docs/PUBLISHING.md` |
 | Where the shared files come from | [the organization repository](https://github.com/dsh-plugin-lab/.github) |
@@ -107,7 +108,7 @@ Labels are repository metadata, so **which labels exist is each repository's own
 business** — the ones above are the common set, not a fixed list. The draft's
 *shape* (its name, how a change is rendered into a line) is shared; that part, and
 the rule that the release body comes from that draft, are the organization-level
-invariants in [docs/plugin-conventions.md](docs/plugin-conventions.md).
+invariants in [docs/plugin-conventions.md](docs/plugin-conventions.md); what makes one a defect is in [docs/criteria.md](docs/criteria.md).
 
 The draft summarises **pull requests**, not commits: a commit pushed straight to
 the default branch is invisible to it. That is a trade-off, not a defect.

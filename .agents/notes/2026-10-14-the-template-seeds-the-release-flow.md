@@ -6,7 +6,7 @@
 
 ## 问题
 
-`docs/plugin-conventions.md` §4 把「发布态不变量」列为**必须一致**，落点写的是各仓的
+`docs/plugin-conventions.md` §2 把「发布态不变量」列为**必须一致**，落点写的是各仓的
 `check:release`；把「发版说明读草稿 / 发完删草稿 / OIDC 发包」列为行为底线。但模板里
 **这三样都没有**：`package.json` 没有 `check:release`，没有 `release-guard.mjs`，也没有
 `release.yml`。
@@ -41,7 +41,7 @@
 带 `github.event_name` 守卫）**都在 `release.yml` 里**，不补等于坑照留。
 
 **③ 抽成组织级可复用 workflow（`workflow_call`）。**
-§2 明确写过「workflow 不抽」：一处改动会让所有仓同时变，且**不出现在任何仓的 diff 里**，
+§3 明确写过「workflow 不抽」：一处改动会让所有仓同时变，且**不出现在任何仓的 diff 里**，
 排查成本高。保持不抽。
 
 ## 依据（实测，不是推断）
@@ -69,6 +69,6 @@
   是个假选项，选错只会在那个仓的 CI 里晚点炸）。
 - `scaffold check` 的 variant 比对塌成单源：一个文件不可能来自两处，`plan()` 里的
   「层冲突」判定随之变成不可达，删掉。
-- 判据文档新增 §3.8「发布流程」与四条底线对应的 §4 行；`README.md` 补一句散文的语言归属
+- 公约新增 §1.8「发布流程」与四条底线对应的 §2 行；`README.md` 补一句散文的语言归属
   （模板与脚本一律英文）。
 - **对已有四仓无影响**：scaffold 是播种器，不回写。

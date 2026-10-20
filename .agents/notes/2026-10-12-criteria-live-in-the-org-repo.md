@@ -12,8 +12,10 @@
 
 ## 决策
 
-一份，住在组织仓 [docs/plugin-conventions.md](../../docs/plugin-conventions.md)（中英双份）。
-各仓只留**指向它的指针**与自己的特有内容；**规则本身落成各仓的断言**（红线测试、`check:*`
+一份，住在组织仓（中英双份）。**2026-10-20 起按读者拆成两份**：规则住
+[docs/plugin-conventions.md](../../docs/plugin-conventions.md)（写插件的人读），
+「哪一档、谁判、落在哪」住 [docs/criteria.md](../../docs/criteria.md)（判缺陷的人读）。
+各仓只留**指向它们的指针**与自己的特有内容；**规则本身落成各仓的断言**（红线测试、`check:*`
 脚本），判据文档只登记"哪一条属于哪个档、落在哪"。
 
 ## 替代方案（强制）

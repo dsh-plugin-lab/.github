@@ -1,7 +1,7 @@
 # 组织级仓 — 维护索引
 
 本文件只服务"维护这个组织仓"这件事：它**不回退到插件仓**，也不会在插件仓的工作里被注入。
-各插件仓有自己的规则层，它们靠文档地图里的一行绝对 URL 指针找到本仓的判据文档。
+各插件仓有自己的规则层，它们靠一行绝对 URL 指针找到本仓的**公约**。
 
 读者与边界见 [README.md](README.md)。
 
@@ -9,10 +9,11 @@
 
 - **A 类文件的改动影响所有插件仓的展示面** —— 本仓改一版，那些"没有自己的同名文件"的仓
   当场跟着变，且它们那边**没有任何提交**。改前先想清服务范围（对照表在 [README.md](README.md)）。
-- **判据文档必须双语同改** —— 改 [docs/plugin-conventions.md](docs/plugin-conventions.md)
-  必须同改 [docs/plugin-conventions_zh.md](docs/plugin-conventions_zh.md)：两份的互链行、
-  结构（标题数 / 表格行 / 代码块）与代码块逻辑必须一致，只有散文与注释、字符串文案可不同。
-- **判据与论证分家** —— 判据文档只留判据 + 一行意图 + 重开条件 + 核对方法 + 指针；
+- **两份文档都必须双语同改** —— 改 [docs/plugin-conventions.md](docs/plugin-conventions.md) 要同改
+  [docs/plugin-conventions_zh.md](docs/plugin-conventions_zh.md)；改 [docs/criteria.md](docs/criteria.md) 要同改
+  [docs/criteria_zh.md](docs/criteria_zh.md)。每对的两份：互链行、结构（标题数 / 表格行 / 代码块）
+  与代码块逻辑必须一致，只有散文与注释、字符串文案可不同。
+- **判据与论证分家** —— 判据只留「档 + 判定体」；规则、一行意图、重开条件住公约；
   论证、推演、实测复盘写进 [.agents/notes/](.agents/notes/)。搬动时两侧指针同改。
 - **issue 模板必须在 `.github/ISSUE_TEMPLATE/`** —— 放仓根不生效，且**不报错**（只认那一个路径）。
 - **`profile/` 里的链接必须写绝对 URL** —— 它渲染在组织主页上，相对链接指不到。
@@ -21,7 +22,7 @@
 - **YAML 里值含 `: `（冒号加空格）一律加引号** —— 否则被解析成映射。
 - **模板与脚本散文一律英文** —— 生成的仓是给外部看的。本仓根目录的展示文件（`README.md`、
   `CONTRIBUTING.md`、`SECURITY.md` 等）也是英文；只有服务维护者的中文（`AGENTS.md`、
-  判据文档的中文版、notes）才用中文。
+  公约与判据的中文版、notes）才用中文。
 - **`git diff --check` 报的「行尾空白」先怀疑 CRLF** —— 本仓 `.gitattributes` 写的是
   `* text=auto eol=lf`，索引里若还留着 CRLF，改一行就会让整文件冒出假告警。
 
@@ -51,7 +52,7 @@
 ## 待办
 
 - [ ] 平台侧设置（私密漏洞报告、ruleset、Discussions）由人工在设置界面开启，不属 agent 范围。
-- [ ] **判据声明了落点，但没人核落点还在不在。** `docs/plugin-conventions.md` 第 5 节多行写着「各仓一条红线断言」，
+- [ ] **判据声明了落点，但没人核落点还在不在。** `docs/criteria.md` 多行写着「各仓一条红线断言」，
   四个插件仓现在都真有；可是本仓没有 CI，也没有脚本，**删掉一条红线不会有任何东西报警**。
   落点应当是 `scripts/scaffold.mjs` 的一个 `check` 子项（扫各仓的 `test/redlines.*`），或者一条明确的
   「红线由人核」的说明——两者选一个，别悬着。这属于「声明了规则却没有检查」，与判据文档自己的立论冲突。
@@ -73,7 +74,8 @@
 | 文件 | 它的身份 | 谁读它 |
 |---|---|---|
 | [README.md](README.md) | 本仓入口：GitHub 为什么会把这些文件放这儿 + **身份路由表** | 任何打开本仓的人 |
-| [docs/plugin-conventions.md](docs/plugin-conventions.md) · [中文](docs/plugin-conventions_zh.md) | **跨仓判据**。第 5 节是要动手的那节，最后一列写明由谁判；第 4 节写插件发出去的包必须带什么 | 判「这是不是缺陷」的人；被注入进插件仓的 agent |
+| [docs/plugin-conventions.md](docs/plugin-conventions.md) · [中文](docs/plugin-conventions_zh.md) | **公约**：插件仓长什么样（第一节）、发出去的包必须带什么（第二节）。**不自带判定体** | 写插件的人；被注入进插件仓的 agent |
+| [docs/criteria.md](docs/criteria.md) · [中文](docs/criteria_zh.md) | **判据**：公约每条规则定档 + 点名判定体。**不复述规则本身** | 判「这是不是缺陷」的人 |
 | [AGENTS.md](AGENTS.md) | **本仓特有**：命令、全局规则、活跃坑 | 在本仓干活的维护者与 agent |
 | [.agents/notes/](.agents/notes/)（结构见其 [README.md](.agents/notes/README.md)） | 决策与依据 —— 「为什么这样定」 | 要动判据的人 |
 | [assets/badges.md](assets/badges.md) | 徽章拷贝即用片段（**存放件，非活件**） | 改插件门面的人 |
@@ -84,10 +86,11 @@
 
 **三条不许越界的边界**（越界即缺陷）：
 
-- 判据只住 `plugin-conventions.md`；论证只住 notes。**两边互链，不互抄。**
+- **规则只住 `plugin-conventions.md`，判定体只住 `criteria.md`，论证只住 notes。** 三边互链，不互抄：
+  判据不复述规则，公约不写判定体，notes 不写判据。
 - `CONTRIBUTING.md` 渲染进各仓，因此它**只放贡献者要遵守的东西**；跨仓判据在那里只给指针。
 - 本仓的展示面（`README.md`、回退件、模板）**一律英文**；中文只在维护者层。
 
 **本仓不管什么**（免得在这里白找一遍）：插件清单与市场索引属
 [dsh-plugin-lab/market](https://github.com/dsh-plugin-lab/market)，插件代码与发布属各插件仓。
-本仓只管组织级文件、跨仓判据与新仓骨架；`README.md` 的 Start-here 表是意图路由，只给指针，不收内容。
+本仓只管组织级文件、插件仓公约与判据、新仓骨架；`README.md` 的 Start-here 表是意图路由，只给指针，不收内容。

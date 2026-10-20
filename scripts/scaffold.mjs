@@ -3,8 +3,8 @@
  * Plugin repository scaffold — lays a CI-passing Cordis plugin repository skeleton into an **empty**
  * directory.
  *
- * This is the **executable form** of section 3 of the plugin conventions ("standard shapes for what
- * each repository keeps"): files that must be byte-identical are copied as bytes, everything else is
+ * This is the **executable form** of section 1 of the plugin conventions ("the shape the scaffold
+ * generates"): files that must be byte-identical are copied as bytes, everything else is
  * rendered from `{{token}}` placeholders. It only **seeds**; it never writes back into an existing
  * repository, so copies stay held together by byte-identity rather than by generation from here
  * (see .agents/notes/2026-10-12-scaffold-seeds-not-syncs.md).
@@ -527,7 +527,7 @@ function main() {
   process.stdout.write(
     `\nnext steps (the scaffold does not do these for you):\n` +
       `  1. Replace icon.svg — it is a placeholder shape, and publishing needs artwork you made or\n` +
-      `     are licensed to use. Follow the icon criteria in the plugin conventions.\n` +
+      `     are licensed to use. Follow the icon section of the plugin conventions.\n` +
       `  2. Write the "What it offers" section of README.md, and every TODO in AGENTS.md.\n` +
       `  3. Adjust the dependency list to the host services actually used — the starting set is\n` +
       `     unverified, and none of it was validated against this plugin.\n` +

@@ -7,8 +7,9 @@
     文件名沿用原名（可省日期）。
   判据、骨架与命名见 [AGENTS.md](AGENTS.md)。
 - 不属它：迁移计划、验收清单、spec 式「应该…」。
-- **与判据层的分工**：[docs/plugin-conventions.md](../../docs/plugin-conventions.md) 只留
-  判据 + 一行意图 + 重开条件 + 核对方法 + 指针；**论证与复盘住本目录**。两者互相指针，不互抄。
+- **与规则层的分工**：[docs/plugin-conventions.md](../../docs/plugin-conventions.md) 只留规则 +
+  一行意图 + 重开条件与指针，[docs/criteria.md](../../docs/criteria.md) 只留「档 + 判定体」；
+  **论证与复盘住本目录**。三者互相指针，不互抄。
 
 ## 目录结构
 
@@ -37,7 +38,8 @@ notes/
 
 - 当前有效：目录里 `状态：生效` 的篇目。
 - 已退场：`状态：已归档` / `状态：被取代` / `状态：已否决` 的篇目（就地标记，不移动文件）。
-- 跨仓判据与形状 → [docs/plugin-conventions.md](../../docs/plugin-conventions.md)（双语，另一份是 [中文版](../../docs/plugin-conventions_zh.md)）。
+- 插件仓的公约（形状、包要带什么）→ [docs/plugin-conventions.md](../../docs/plugin-conventions.md)（双语，另一份是 [中文版](../../docs/plugin-conventions_zh.md)）。
+- 判据（定档与判定体）→ [docs/criteria.md](../../docs/criteria.md)（双语，另一份是 [中文版](../../docs/criteria_zh.md)）。
 - 工作规则 → [AGENTS.md](AGENTS.md)。
 
 ## 改哪（变更影响路由）
@@ -46,4 +48,4 @@ notes/
 - 决策失效 → 就地标记 `状态：已归档`，不移动文件、不建 `archived/` 目录。
 - 改本目录规则 → [AGENTS.md](AGENTS.md)；改完跑一次链接校验。
 - 新增记录后 → 回查根 [AGENTS.md](../../AGENTS.md) 的文档地图与待办是否要同步。
-- **判据与论证的搬动**：判据留在 `plugin-conventions`，论证搬到本目录；搬完两侧的指针都要更新（判据文档里的相对链接指向本目录的篇目）。
+- **规则、判据与论证的搬动**：规则留 `plugin-conventions`，判定体留 `criteria`，论证搬到本目录；搬完三侧的指针都要更新。
