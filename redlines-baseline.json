@@ -4,15 +4,20 @@
     "describe": 18,
     "it": 71
   },
+  "dsh-dsml-rescue": {
+    "file": "test/redlines.test.ts",
+    "describe": 9,
+    "it": 23
+  },
   "dsh-plugin-debugging": {
     "file": "test/redlines.test.ts",
-    "describe": 35,
-    "it": 123
+    "describe": 36,
+    "it": 124
   },
   "dsh-workbuddy-bridge": {
     "file": "tests/redlines.spec.ts",
-    "describe": 12,
-    "it": 44
+    "describe": 13,
+    "it": 45
   },
   "dsh-zhihu-search": {
     "file": "test/redlines.test.ts",
