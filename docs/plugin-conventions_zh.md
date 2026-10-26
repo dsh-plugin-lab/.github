@@ -28,8 +28,8 @@
 
 ## 1. 脚手架产出的形状
 
-**这是目标，不是「四仓都这样」的声明。** 下面写的是 `node scripts/scaffold.mjs` 产出什么、为什么；
-四个现有仓在哪些地方合法地不同，见 §1.9。形状对不等于没问题，形状不同也不等于缺陷 —— 必须一致的东西见 [criteria.md](criteria.md)。
+**这是目标，不是「每仓都这样」的声明。** 下面写的是 `node scripts/scaffold.mjs` 产出什么、为什么；
+现有各仓在哪些地方合法地不同，见 §1.9。形状对不等于没问题，形状不同也不等于缺陷 —— 必须一致的东西见 [criteria.md](criteria.md)。
 
 **新仓不从本文抄形状**：形状由脚手架铺（`node scripts/scaffold.mjs <dir>`，随后 `--verify` 跑生成仓
 自己的检查）。读本节是为了知道**为什么**生成出来的文件长这样、**哪里可以合法地不同** —— 不是拿来抄。
@@ -59,7 +59,7 @@ ruleset 的 `required_status_checks` 只写 `CI Success` 这一个名字。
 
 ### 1.3 草稿 Release
 
-**workflow** 每仓一份，实测四个仓逐字节相同：
+**workflow** 每仓一份，实测组织内每个仓逐字节相同：
 
 文件本体在[模板的 release-drafter.yml](../templates/plugin/_common/.github/workflows/release-drafter.yml)。
 

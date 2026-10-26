@@ -37,7 +37,7 @@ questions decide where a piece of content belongs, in this order:
 ## 1. The shape the scaffold generates
 
 **This is a target, not a claim of uniformity.** What follows is what `node scripts/scaffold.mjs`
-produces and why; §1.9 lists the places where the four existing repositories legitimately differ from
+produces and why; §1.9 lists the places where the existing repositories legitimately differ from
 it. A repository that matches the shape is not thereby correct, and one that differs is not thereby a
 defect — what must agree is in [criteria.md](criteria.md).
 
@@ -77,7 +77,7 @@ The file is [the template's dependabot.yml](../templates/plugin/_common/.github/
 
 ### 1.3 Draft releases
 
-The **workflow** is one per repository, and byte-identical across all four — measured, not assumed:
+The **workflow** is one per repository, and byte-identical across the whole organization — measured, not assumed:
 
 The file is [the template's release-drafter.yml](../templates/plugin/_common/.github/workflows/release-drafter.yml).
 
