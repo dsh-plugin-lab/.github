@@ -2,7 +2,7 @@
  * Which repositories are plugin repositories, and what is in them — read once, reused by every check.
  *
  * The organization has three kinds of repository (see docs/plugin-conventions.md): plugin
- * repositories, this one, and the market. Discovery must name the first kind without help from a
+ * repositories, this one, and the index repository. Discovery must name the first kind without help from a
  * hand-written list, because a list is a second source of truth that goes stale the moment a
  * repository is created or archived.
  *

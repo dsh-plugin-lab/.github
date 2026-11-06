@@ -3,7 +3,7 @@
 [English](criteria.md) | [中文](criteria_zh.md)
 
 **本文写给谁**：你正在判「两仓之间的某处不同」「发出去的某个包」**算不算缺陷** —— 某个 PR 改了版本号、
-某次发布读错了东西、两个仓不再长得一样、某个包不再带市场需要的东西。
+某次发布读错了东西、两个仓不再长得一样、某个包不再带索引需要的东西。
 
 **本文不自带任何规则。** 下表每一行指向 [plugin-conventions.md](plugin-conventions.md) 里的一条规则，
 给它定档，并点名由哪个文件或脚本判它。「这条到底有没有被执行」在这里有答案，不靠感觉。
@@ -13,7 +13,8 @@
 
 **不进本文**：论证、权衡与复盘 → [.agents/notes/](../.agents/notes/)。
 
-表中每一行并非都约束本组织的每个仓 —— 插件仓、组织仓、市场各自承担不同的那部分。谁承担哪部分写在
+表中每一行并非都约束本组织的每个仓 —— 插件仓、组织仓、[索引仓](https://github.com/dsh-plugin-lab/market)
+各自承担不同的那部分。谁承担哪部分写在
 [公约的「本文约束谁」](plugin-conventions.md) 里，不在本文。
 
 三档。表格最后一列不是散文，它点名判这一行的文件或脚本。
@@ -26,9 +27,9 @@
 
 | 判据 | 档 | 由谁判 |
 |---|---|---|
-| 发出去的包带上公约 §2 的四项输入 | 必须一致 | 各仓 `check:release`（断言 tarball 与清单里有什么）；市场侧的 diagnostics 让遗漏可见 |
+| 发出去的包带上公约 §2 的四项输入 | 必须一致 | 各仓 `check:release`（断言 tarball 与清单里有什么）；[索引构建](https://github.com/dsh-plugin-lab/market)的 diagnostics 让遗漏可见 |
 | 发出去的包**不带**只给 README 看的图：图住仓里，README 用相对路径 | 必须一致 | 各仓一条红线断言 —— 只给 README 看的图不在包的覆盖范围内、README 用相对路径、运行期资产仍在包里 |
-| 合并的版本真的发到 npm | 必须一致 | 各仓 `docs/PUBLISHING.md` 的发布后核对；全组织范围由市场的漂移报告发现 |
+| 合并的版本真的发到 npm | 必须一致 | 各仓 `docs/PUBLISHING.md` 的发布后核对；全组织范围由[索引的漂移报告](https://github.com/dsh-plugin-lab/market/blob/main/scripts/check-org-drift.mjs)发现 |
 | 声明的每一族宿主都被巡检判过 | 必须一致 | 各仓 `scripts/check-declaration.mjs`，按行打印计数 |
 | 锁文件里**除了官方 registry 不出现别的地址**。pnpm 记的是 integrity 而不是 tarball 地址，所以断言查的是文件里出现的**每一个 `http(s)` URL** —— 出现一个就说明这份锁文件在镜像上生成过 | 必须一致 | 各仓一条红线断言（条数由脚本数，不写进文档）；`scripts/check-criteria.mjs` 从本仓再核一遍同一条件 |
 | **只用 pnpm**，`pnpm-lock.yaml` 是唯一锁文件 | 必须一致 | 模板里写明；迁移过的仓其 `.prettierignore` 由 `scaffold check` 对齐 |
@@ -74,15 +75,15 @@
 - **形状** → 读 [plugin-conventions.md](plugin-conventions.md) §1；不要把那里的值抄进仓。
 - **一条规矩不能只写在说明文字里** → 能变成断言的都变成断言（红线测试、`check:*` 脚本）；说明文字只留指针。
 - **对比式描述（「A 有、B 没有」）过期最快** → 它同时依赖两边，照它行动之前先回原始来源核实。
-- **管理层设施自己核对**：组织仓没有 CI，靠手工跑（见它的 `AGENTS.md`）；市场有自己的 workflow、测试与
-  diagnostics 基线（见它的 `AGENTS.md`）。本文没有任何一行要求这两个仓去满足插件的义务。
+- **管理层设施自己核对**：组织仓没有 CI，靠手工跑（见它的 `AGENTS.md`）；[索引仓](https://github.com/dsh-plugin-lab/market)
+  有自己的 workflow、测试与 diagnostics 基线（见它的 `AGENTS.md`）。本文没有任何一行要求这两个仓去满足插件的义务。
 
 ---
 
 ## 本文在文档网络里的位置
 
 - **规则本身是什么** → [plugin-conventions.md](plugin-conventions.md)；本文从不复述它。
-- **插件的包必须带什么** → 公约 §2，字段语义再查市场的
+- **插件的包必须带什么** → 公约 §2，字段语义再查[索引仓](https://github.com/dsh-plugin-lab/market)的
   [market-format.md](https://github.com/dsh-plugin-lab/market/blob/main/docs/market-format.md)。
 - **要新建一个插件仓** → 脚手架：`node scripts/scaffold.mjs <dir> --verify`
 - **在某个插件仓里干活** → 那个仓的 `AGENTS.md`

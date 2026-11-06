@@ -4,7 +4,7 @@
 
 **Who this is for**: you are judging whether a difference between repositories, or a published package, is
 a **defect** — a pull request that changes the version, a release that reads the wrong thing, two
-repositories that stopped looking alike, a package that no longer carries what the market needs.
+repositories that stopped looking alike, a package that no longer carries what the index needs.
 
 **This document holds no rules of its own.** Every row names a rule that lives in
 [plugin-conventions.md](plugin-conventions.md), gives it a tier, and names the file or script that judges
@@ -15,9 +15,9 @@ repository's `AGENTS.md`), running a release (that repository's `docs/PUBLISHING
 
 **What stays out**: arguments, trade-offs and post-mortems → [.agents/notes/](../.agents/notes/).
 
-Not every row binds every repository in this organization — the plugin, the organization and the market
-repositories each carry a different share. Which share is which is
-[the conventions' scope section](plugin-conventions.md), not this document.
+Not every row binds every repository in this organization — the plugin, the organization and the
+[index repository](https://github.com/dsh-plugin-lab/market) each carry a different share. Which share
+is which is [the conventions' scope section](plugin-conventions.md), not this document.
 
 Three tiers. The last column of the table is not prose: it names the file or script that judges the row.
 
@@ -29,9 +29,9 @@ Three tiers. The last column of the table is not prose: it names the file or scr
 
 | Rule | Tier | What judges it |
 |---|---|---|
-| A published package carries the four inputs of the conventions (§2) | Must agree | `check:release` per repository (it asserts what the tarball and manifest contain); the market's diagnostics make an omission visible |
+| A published package carries the four inputs of the conventions (§2) | Must agree | `check:release` per repository (it asserts what the tarball and manifest contain); the diagnostics of the [index build](https://github.com/dsh-plugin-lab/market) make an omission visible |
 | A published package does **not** carry the images only the README shows: they live in the repository and are referenced relatively | Must agree | a redline assertion per repository — the README-only images outside the package's coverage, the README using relative paths, the runtime assets still in the package |
-| A merged version reaches npm | Must agree | the post-release check in each repository's `docs/PUBLISHING.md`; detected org-wide by the market's drift report |
+| A merged version reaches npm | Must agree | the post-release check in each repository's `docs/PUBLISHING.md`; detected org-wide by the [index's drift report](https://github.com/dsh-plugin-lab/market/blob/main/scripts/check-org-drift.mjs) |
 | Every declared host family is judged by the patrol | Must agree | `scripts/check-declaration.mjs` per repository, printing a count per line |
 | The lockfile carries **no address but the official registry's**. pnpm records integrity, not tarball URLs, so the assertion is over every http(s) URL that appears at all — one is already a leftover from a lockfile generated against a mirror | Must agree | a redline assertion per repository (the count is computed, never copied into a document); `scripts/check-criteria.mjs` re-checks the same condition from here |
 | **One package manager only: pnpm**, with `pnpm-lock.yaml` as the sole lockfile | Must agree | stated in the template; a migrated repository's `.prettierignore` falls into place under `scaffold check` |
@@ -83,8 +83,9 @@ not be forced into alignment.
 - **Contrastive descriptions ("A has it, B does not") go stale fastest** → they depend on both sides at
   once; before acting, re-check the original source.
 - **The management-layer repositories check themselves**: the organization repository has no CI and is
-  checked by hand (its `AGENTS.md`); the market has its own workflow, tests and diagnostics baseline (its
-  `AGENTS.md`). No row here asks either of them to satisfy a plugin's obligations.
+  checked by hand (its `AGENTS.md`); the [index repository](https://github.com/dsh-plugin-lab/market) has
+  its own workflow, tests and diagnostics baseline (its `AGENTS.md`). No row here asks either of them to
+  satisfy a plugin's obligations.
 
 ---
 
@@ -92,7 +93,8 @@ not be forced into alignment.
 
 - **What the rule actually is** → [plugin-conventions.md](plugin-conventions.md); this document never
   restates it.
-- **What a plugin's published package must carry** → the conventions (§2), then the market's
+- **What a plugin's published package must carry** → the conventions (§2), then the
+  [index repository's](https://github.com/dsh-plugin-lab/market)
   [market-format.md](https://github.com/dsh-plugin-lab/market/blob/main/docs/market-format.md) for field
   semantics.
 - **Building a new plugin repository** → the scaffold: `node scripts/scaffold.mjs <dir> --verify`

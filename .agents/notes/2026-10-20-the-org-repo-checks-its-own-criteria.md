@@ -38,7 +38,7 @@
 - **继续无 CI，靠人工跑脚本**：等于把「没有人会跑」写成制度。判据文档已经立论反对这件事。
 - **让每个插件仓自己检查跨仓判据**：跨仓事实住在某一个仓里时，另一个仓的人读不到；
   而且 N 个仓各跑一遍等于 N 份漂移。见[决策：跨仓判据住组织仓](2026-10-12-criteria-live-in-the-org-repo.md)。
-- **把检查放进 market 仓**：market 构建索引时**只读 `package.json`**（`build-index.mjs` 从 npm
+- **把检查放进[索引仓](https://github.com/dsh-plugin-lab/market)**：索引构建时**只读 `package.json`**（`build-index.mjs` 从 npm
   registry 与已发布 tarball 取事实，`check-org-drift.mjs` 只读清单），它不读 `test/`、
   不读 workflow，加进来是给它塞一份无关职责。规范归组织仓管。
 - **抽成共享包给两边用**：本组织既有的结论是「只抽约定，不抽代码」，见

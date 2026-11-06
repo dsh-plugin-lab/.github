@@ -17,7 +17,7 @@
  *
  * It deliberately does **not** check what cannot be decided from files:
  *
- *   - whether a merged version actually reached npm (that needs the registry, and the market's
+ *   - whether a merged version actually reached npm (that needs the registry, and the index's
  *     drift report already looks at it);
  *   - how the tooling behaves when a peer is missing, or which TypeScript switches should be on
  *     (those are judgements about a running build);

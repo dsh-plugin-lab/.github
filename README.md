@@ -15,7 +15,7 @@ changes what those repositories show, and appears in none of their diffs.**
 | Writing a plugin repository — what it must look like | [docs/plugin-conventions.md](docs/plugin-conventions.md) — the shape and what a published package must carry |
 | Deciding whether something is a **defect** across the organization | [docs/criteria.md](docs/criteria.md) — one row per rule, its tier, and the file or script that judges it |
 | Looking at the organization's public page | [profile/README.md](profile/README.md) |
-| Browsing or installing the plugins themselves | [dsh-plugin-lab/market](https://github.com/dsh-plugin-lab/market) — the plugin market index |
+| Browsing or installing the plugins themselves | [dsh-plugin-lab/market](https://github.com/dsh-plugin-lab/market) — the plugin index |
 
 ## What it holds
 

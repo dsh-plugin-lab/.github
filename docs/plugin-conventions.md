@@ -24,8 +24,8 @@ also a DSH bundle. The other two repositories in this organization are outside t
 
 - **The organization repository** (`dsh-plugin-lab/.github`) publishes nothing; what it holds and why is its
   own [README.md](../README.md).
-- **The market** (`dsh-plugin-lab/market`) builds a generated index and publishes no package; what it must
-  do is its own repository's business.
+- **The [index repository](https://github.com/dsh-plugin-lab/market)** (`dsh-plugin-lab/market`) builds a
+  generated index and publishes no package; what it must do is its own repository's business.
 
 Both are **management-layer facilities**: they exist because there are plugins, not as plugins. Two
 questions decide where a piece of content belongs, in this order:
@@ -228,7 +228,7 @@ so no template can carry them — each repository's `docs/PUBLISHING.md` states 
 
 **A publish can fail for reasons no file can fix.** The one seen in practice: an expired Trusted
 Publisher binding makes the OIDC exchange return 404, and the package silently stays on its previous
-version. That is why §2 asks that a merged version reach npm, and why the market reports the drift: the
+version. That is why §2 asks that a merged version reach npm, and why the index build reports the drift: the
 gap between "merged" and "published" is invisible from inside the repository.
 
 ### 1.9 Where repositories legitimately differ
@@ -252,8 +252,8 @@ are facts that change without this document — read them from the repository, o
 
 ## 2. What a published package must carry
 
-The market reads the **published artifact**, never a checkout, so anything it needs has to survive into
-the tarball and the registry manifest. A plugin that omits these still installs — but its market entry
+The index build reads the **published artifact**, never a checkout, so anything it needs has to survive into
+the tarball and the registry manifest. A plugin that omits these still installs — but its index entry
 degrades **silently**: no title, no icon, a version that disappears from the list.
 
 | What | Where it is read from | What "missing" looks like |
@@ -265,7 +265,7 @@ degrades **silently**: no title, no icon, a version that disappears from the lis
 
 Two further obligations, both about the artifact rather than the repository:
 
-- **A version merged to `main` must reach npm.** A merge is not a release; between the two the market
+- **A version merged to `main` must reach npm.** A merge is not a release; between the two the index
   keeps advertising the previous version and every check here is correctly green. Each repository's
   `docs/PUBLISHING.md` says how it proves the published version is the merged one.
 - **Publishing is the only way to change any of the above.** Editing a manifest in the repository changes
@@ -273,7 +273,7 @@ Two further obligations, both about the artifact rather than the repository:
 
 ### What the package must not carry
 
-The obligation above is about what the market reads. There is a mirror obligation about what nobody
+The obligation above is about what the index reads. There is a mirror obligation about what nobody
 reads: **images that only the README shows do not belong in the published package.**
 
 - **They live in the repository and the README references them relatively** (`assets/x.png`). Both
@@ -282,7 +282,7 @@ reads: **images that only the README shows do not belong in the published packag
 - **`files` does not list `assets/`.** A plugin whose facade images ship in the tarball makes every
   consumer download screenshots to get code, and makes every reader of the index pay to fetch them. The
   size of the harm is not the point; the direction is.
-- **This does not apply to `icon.svg`**, which the market does read (see the table above) and which is
+- **This does not apply to `icon.svg`**, which the index does read (see the table above) and which is
   therefore shipped.
 - **Runtime assets still ship — because `files` names each one.** A plugin that reads a file at runtime
   keeps working, while a newly added screenshot never enters the package on its own: the list is of
@@ -292,7 +292,8 @@ reads: **images that only the README shows do not belong in the published packag
   disk cannot notice the omission.
 
 **Field semantics live elsewhere, on purpose**: which JSON key, which path, what the reader does with an
-unknown member → the market's [market-format.md](https://github.com/dsh-plugin-lab/market/blob/main/docs/market-format.md).
+unknown member → the [index repository's](https://github.com/dsh-plugin-lab/market)
+[market-format.md](https://github.com/dsh-plugin-lab/market/blob/main/docs/market-format.md).
 This section states the **obligation**; that document is the **contract**. Neither copies the other.
 
 ---
