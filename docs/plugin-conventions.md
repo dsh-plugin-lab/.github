@@ -92,7 +92,8 @@ The **config** splits into two layers that do not land in the same place:
 - The **shape** is shared (in the organization repository's `.github/release-drafter.yml`, which a
   repository without a config of its own falls back to): the draft's name, the change line
   `- $TITLE (#$NUMBER) @$AUTHOR`, the escaping set, the version resolver. **Repositories do not
-  re-decide these.**
+  re-decide these.** The change line is ours rather than the action's default
+  (`* $TITLE (#$NUMBER) $AUTHORS`); the action's documentation will not confirm it.
 - The **category → label mapping is per repository**. Labels are **repository metadata** and genuinely
   differ. The organization copy is a **default, not a standard**: a repository whose labels differ ships
   a config of its own.

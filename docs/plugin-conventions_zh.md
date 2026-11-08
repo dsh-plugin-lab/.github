@@ -69,7 +69,8 @@ ruleset 的 `required_status_checks` 只写 `CI Success` 这一个名字。
 **配置**分两层，归属不同：
 
 - **形状是共享的**（在组织仓 `.github/release-drafter.yml`，未自带配置的仓回退到它）：草稿名、变更行
-  `- $TITLE (#$NUMBER) @$AUTHOR`、转义集合、版本解析。**各仓不重新决定这些。**
+  `- $TITLE (#$NUMBER) @$AUTHOR`、转义集合、版本解析。**各仓不重新决定这些。** 变更行是自定的，
+  不是 action 默认的 `* $TITLE (#$NUMBER) $AUTHORS`；查它的文档核不上。
 - **分类 → 标签的映射按仓自定**。标签是**仓的元数据**，本来就会不同。组织仓那份是**默认值，不是标准**：
   标签不一样的仓自带一份配置。
 
