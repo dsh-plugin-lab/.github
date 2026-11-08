@@ -12,8 +12,12 @@
  *   the host **silently falls back** (title to the package name, description to
  *   `package.json.description`, icon to the default): the plugin page reports nothing.
  * - **Declaration self-consistency**: `engines.dsh` and every `@deepseek-ai/dsh-*` peer must not
- *   disagree about the floor. When they do, a user installing by the range we advertise cannot get
- *   a working host.
+ *   disagree about the floor. **Since DSH 0.2.1-alpha.4 that is not because the peers still decide
+ *   anything**: a package that declares `engines.dsh` has its `@deepseek-ai/dsh*` peer ranges ignored
+ *   outright, and only an **absent** declaration falls back to them. Up to and including
+ *   0.2.1-alpha.3 the reverse held — only the peers were read, and `engines.dsh` had no reader at all.
+ *   The check stays because the two declarations describe one thing, so a disagreement means one of
+ *   them was forgotten when the floor moved, and the next reader cannot tell which one is meant.
  *
  * Exit codes: 0 = all green / 1 = something failed / 2 = precondition missing (no readable manifest).
  *
@@ -56,7 +60,7 @@ require_('private', pkg.private !== true, 'remove "private": true before releasi
 require_(
   'engines.dsh',
   typeof pkg.engines?.dsh === 'string' && pkg.engines.dsh.trim() !== '',
-  'the host compatibility range must be declared; it drifts, so only "declared and non-empty" is judged here.',
+  'the host compatibility range must be declared; it drifts, so only "declared and non-empty" is judged here. Since DSH 0.2.1-alpha.4 this declaration decides compatibility by itself, so the shapes that pass this test and still fail the host matter: a `workspace:` range is incompatible, and a non-object `engines` or a non-string `engines.dsh` makes the manifest unreadable, which refuses the install.',
 )
 require_(
   'files includes cordis.patch.yml',
@@ -302,7 +306,7 @@ if (floorVersion !== undefined) {
     require_(
       `peer ${name} floor is not below engines.dsh`,
       version !== undefined && compareFloor(version, floorVersion) >= 0,
-      `the peer range is ${text} (floor ${version ?? '?'}) and engines.dsh is ${floor} — a host installed by the peer range may not satisfy engines.`,
+      `the peer range is ${text} (floor ${version ?? '?'}) and engines.dsh is ${floor} — since DSH 0.2.1-alpha.4 the peer range no longer decides whether a host installs, so what this reports is a declaration left behind when the floor moved, not a host that will refuse to load.`,
     )
   }
 }
