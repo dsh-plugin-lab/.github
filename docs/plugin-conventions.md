@@ -254,15 +254,24 @@ are facts that change without this document — read them from the repository, o
 ## 2. What a published package must carry
 
 The index build reads the **published artifact**, never a checkout, so anything it needs has to survive into
-the tarball and the registry manifest. A plugin that omits these still installs — but its index entry
-degrades **silently**: no title, no icon, a version that disappears from the list.
+the tarball and the registry manifest. Omitting a **display input** — `locale/`, the icon, `author` — still
+installs; the entry only degrades **silently**: no title, no icon, a blank author line. **`engines.dsh` is
+the exception, and the only one**: it is not a display input but the compatibility declaration itself, so
+the wrong shape of it stops an install instead of degrading an entry.
 
 | What | Where it is read from | What "missing" looks like |
 |---|---|---|
 | `locale/<language>.json` with `meta.title` and `meta.description`, **and an `en` entry** | the published tarball | the entry shows the package name instead of a title |
 | An icon file, **declared by `icon` in `package.json`** and shipped by `files` | the published tarball, at the declared path | the entry has no icon |
-| `engines.dsh` as a valid SemVer range, never a `workspace:` range | the registry manifest | the entry loses its compatibility range, or resolves to "any" |
+| `engines.dsh` as a valid SemVer range, never a `workspace:` range | the registry manifest | an absent declaration hands compatibility to the package's `@deepseek-ai/dsh*` peers — never "any" — and a non-object `engines` or a non-string `engines.dsh` makes the manifest unreadable, so the host refuses the install |
 | `author` | the registry manifest | the entry has a blank author line |
+
+`engines.dsh` decides compatibility **by itself**: since DSH `0.2.1-alpha.4` a package that declares it has
+its `@deepseek-ai/dsh*` peer ranges ignored outright, and only an absent declaration falls back to those
+peers (up to and including `0.2.1-alpha.3` the reverse held — only the peers were read, and `engines.dsh`
+had no reader). That is why omitting it is not "any version" but "judged by the peers instead", and why the
+two shapes the host cannot read at all — `engines` that is not an object, `engines.dsh` that is not a
+string — are refused rather than degraded.
 
 Two further obligations, both about the artifact rather than the repository:
 

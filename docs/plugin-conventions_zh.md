@@ -193,14 +193,21 @@ ruleset 的 `required_status_checks` 只写 `CI Success` 这一个名字。
 ## 2. 发出去的包必须带什么
 
 索引读的是**已发布的产物**，从不读 checkout。所以它需要的东西必须保留进 tarball 与 registry 清单。
-漏掉不会让插件装不上 —— 但它的索引条目会**静默降级**：没标题、没图标、某个版本从列表里消失。
+漏掉一项**展示输入** —— `locale/`、图标、`author` —— 仍然装得上；只是条目会**静默降级**：没标题、没图标、
+作者一行为空。**`engines.dsh` 是例外，而且是唯一的例外**：它不是展示输入，而是兼容性声明本身，
+所以它写错形态会**拦住安装**，而不是让条目降级。
 
 | 什么 | 从哪读 | 「缺了」长什么样 |
 |---|---|---|
 | `locale/<语言>.json`，含 `meta.title` 与 `meta.description`，**且必须有 `en`** | 已发布的 tarball | 条目显示包名而不是标题 |
 | 图标文件，**由 `package.json` 的 `icon` 声明**，并由 `files` 打进包 | 已发布 tarball 里的声明路径 | 条目没有图标 |
-| `engines.dsh` 是合法的 SemVer 区间，**不能是 `workspace:` 区间** | registry 清单 | 条目失去兼容区间，或被当成「任意版本」 |
+| `engines.dsh` 是合法的 SemVer 区间，**不能是 `workspace:` 区间** | registry 清单 | 声明缺席时兼容性交给包自己的 `@deepseek-ai/dsh*` peer 判 —— **不是「任意版本」**；`engines` 不是对象、或 `engines.dsh` 不是字符串会让清单不可读，宿主**拒装** |
 | `author` | registry 清单 | 条目作者一行为空 |
+
+`engines.dsh` **自己单独决定**兼容性：自 DSH `0.2.1-alpha.4` 起，声明了它的包其
+`@deepseek-ai/dsh*` peer 范围被**完全忽略**，只有声明缺席才回退到那些 peer（0.2.1-alpha.3 及更早相反 ——
+只读 peer，`engines.dsh` 没有任何读取者）。所以「不写它」不等于「任意版本」，而是「改由 peer 判」；
+也所以宿主完全读不出的两种形态 —— `engines` 不是对象、`engines.dsh` 不是字符串 —— 是**拒装**，不是降级。
 
 另外两条义务，针对产物而不是仓：
 
