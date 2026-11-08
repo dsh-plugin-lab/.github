@@ -101,7 +101,7 @@ jobs:
           if [ -n "$number" ]; then
             gh issue edit "$number" --body "$body"
           else
-            gh issue create --title "$title" --body "$body"
+            gh issue create --title "$title" --body "$body" --label bug
           fi
 
           # Red means "something new". A tracked finding keeps the issue open and the run green.
