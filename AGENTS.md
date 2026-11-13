@@ -58,9 +58,37 @@
 - 本仓的判定要看**渲染效果**而不是文件内容：issue 表单要点开 New issue 看下拉项，
   组织主页要看 github.com/dsh-plugin-lab，回退要看 `community/profile` 的返回。
 
+## 平台侧设置（**不是文件，没有任何执行体**）
+
+GitHub 上有一类规矩只存在于设置里：ruleset、私密漏洞报告、Dependabot 安全更新、发布 environment。
+它们**不出现在任何仓的 diff 里**，本仓的 `check-criteria.mjs` 也一条都读不到 —— 所以这里只记
+「设了什么 + 怎么复查」。**表里是状态不是承诺**：某一项被关掉，不会有任何东西变红。
+
+逐仓要一致的（六个插件仓 + market + 本仓）：
+
+| 设置 | 值 | 复查 |
+|---|---|---|
+| `protect-main`（ruleset，target=branch） | 禁止删除 + 禁止强推 + **必须走 PR** | `gh api repos/dsh-plugin-lab/<仓>/rules/branches/main` |
+| 其中的 `required_status_checks` | **只有插件仓有**，只写一个名字 `CI Success` | 同上；判据是 [docs/plugin-conventions.md](docs/plugin-conventions.md) §1.1 |
+| 绕过 | `RepositoryRole:5`（admin）always —— 是**防误操作**，不是防维护者 | `gh api repos/dsh-plugin-lab/<仓>/rulesets/<id>` 的 `current_user_can_bypass` |
+| 私密漏洞报告 | 开（[SECURITY.md](SECURITY.md) 承诺的那个入口） | `gh api repos/dsh-plugin-lab/<仓>/private-vulnerability-reporting` |
+| Dependabot 安全更新 | 开 | `gh api repos/dsh-plugin-lab/<仓>/automated-security-fixes` |
+| Discussions | 关 —— 本族不用，issue 按仓分立 | `gh api repos/dsh-plugin-lab/<仓>` 的 `has_discussions` |
+
+**为什么 market 与本仓不加 `CI Success`**：那条检查依赖「`ci.yml` 有一个收尾 job 叫这个名字」。
+本仓唯一的 workflow 没有 `pull_request` 触发器，market 的 `build-market.yml` 带 `paths` 过滤 ——
+硬加这一条，凡是没命中 paths 的 PR 永远等不到那个状态，PR 会被**永久卡死**。插件仓那条规矩
+在这里不成立，是因为前提不成立，不是例外。
+
+**发布 environment 是逐仓的**（判据明写它不由模板携带）：名字按各仓 `release.yml` 写的那个来，
+对不上则 OIDC 的 claims 与 Trusted Publisher 不匹配、发布 404。dispatcher 的 `release` 是
+2026-11-13 补的，它的 `release.yml` 那天起才具备 OIDC 前提。
+
 ## 待办
 
-- [ ] 平台侧设置（私密漏洞报告、ruleset、Discussions）由人工在设置界面开启，不属 agent 范围。
+- [x] ~~平台侧设置由人工在设置界面开启~~ —— 2026-11-13 处理：这些**不是文件**，本仓的判据
+  一条都读不到它们，所以它们设完**没有任何执行体**。已开的与复查命令见下方「平台侧设置」一节；
+  那一节是**当前状态**，不是承诺 —— 某一项被关掉，本仓不会有任何东西变红。
 - [x] ~~四个编译器开关没有执行体~~ —— 2026-10-20 处理：判据升为 **Must agree** 并收窄成「四个死代码开关
   是下限」（`noUnusedLocals` / `noUnusedParameters` / `noImplicitReturns` / `noFallthroughCasesInSwitch`；
   `strict` 那一族另成一节）。四仓各有一条红线断言，`dsh-workbuddy-bridge` 补齐了缺的
