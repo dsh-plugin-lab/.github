@@ -42,6 +42,7 @@ import { dirname, join } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { discoverPlugins } from './lib/discover.mjs'
+import { judgeFrontDoor } from './lib/front-door.mjs'
 import { judgeTsconfigFloor } from './lib/tsconfig-floor.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -385,6 +386,31 @@ const CHECKS = [
       if (!/release-drafter\/release-drafter@/u.test(draft)) problems.push('the draft workflow does not use the release-drafter action')
       if (!/runs-on:\s*ubuntu/u.test(draft)) problems.push('the draft workflow is not pinned to an ubuntu runner')
       return problems
+    },
+  },
+  {
+    id: 'front-door-tagline',
+    criterion: 'The tagline is two lines and they swap: the bold line is the language of the file, the pair is one mirror',
+    group: 'README',
+    async run(repository) {
+      const { read } = repository
+      const readme = await read('README.md')
+      if (readme === undefined) return ['README.md is missing']
+
+      // The second front door is named after the language it carries, so the file name is the only
+      // thing that says which language `README.md` itself is in — two repositories in this family
+      // ship the Chinese half as `README.md`. Probing both names is also how a listing-less source
+      // is asked what it has.
+      let other
+      for (const name of ['README_zh.md', 'README_en.md']) {
+        const text = await read(name)
+        if (text !== undefined) {
+          other = { name, text }
+          break
+        }
+      }
+
+      return judgeFrontDoor({ readme, other })
     },
   },
 ]

@@ -40,7 +40,8 @@
 - 核对逐字相同件：`node scripts/scaffold.mjs check <仓目录>...` —— 模板那一份与仓内同名文件
   做 SHA-256 比对。**不一致不必然是缺陷**（分号、锁文件名本来就是逐仓参数），
   它报的是「知道它不同」，不是「强行一样」
-- 判据机检的纯判断用 `node --test scripts/test/` 验（零依赖，`node:` 内建）：
+- 判据机检的纯判断用 `node --test scripts/test/*.test.mjs` 验（零依赖，`node:` 内建；
+  **要写 glob** —— Node 24 把目录参数当模块路径，报 `Cannot find module`）：
   它读的是 **GitHub 上的已推送版本**，所以「本地改坏一个文件看它红不红」**证明不了任何事**
   —— 要验子弹得直接喂坏数据给纯函数。**改过判据的判断逻辑就跑一遍**
 - 核对判据落点：`node scripts/check-criteria.mjs`（`--trace` 看抓取与缓存，`--json` 给机器读，
