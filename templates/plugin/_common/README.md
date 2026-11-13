@@ -5,7 +5,9 @@
 <h1 align="center">{{name}}</h1>
 
 <div align="center">
-  <p><em>{{description}}</em></p>
+  <p><strong>{{description}}</strong></p>
+
+  <p><em>TODO: the same sentence in the second language</em></p>
 
   <p>
     <a href="https://github.com/deepseek-ai/deepseek-harness"><img src="https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat&logo=deepseek&logoColor=white" alt="powered by dsh"></a>
