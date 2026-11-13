@@ -249,6 +249,21 @@ Same shape, different parameters or counts. None of these is a defect on its own
 are facts that change without this document — read them from the repository, or compare with
 `scaffold check`. What is recorded above is the **category** each difference falls into.
 
+### 1.10 The front door
+
+The README's first screen: the icon, the package name, the tagline, the badges, and — where a second
+language exists — the switch. One thing about it cannot be left to habit:
+
+- **The tagline is two lines, and they swap.** `<strong>` is the language of the file being read,
+  `<em>` is the other one; the two READMEs are each other's mirror, not two independent translations.
+  Intent: a reader of one language never sees the other file, so nothing reports it when the pair
+  drifts apart — the bold line is the only place the two halves are known to agree.
+- **The switch marks where the reader already is** (current language emphasised), and a repository
+  with one language does not carry a switch at all — a link to a file that is not there is worse than
+  no line.
+
+The template seeds this shape; the criteria name the assertion that holds it.
+
 ---
 
 ## 2. What a published package must carry
