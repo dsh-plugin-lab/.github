@@ -1,10 +1,21 @@
 import { transform } from 'lightningcss'
 import type { Plugin, UserConfig } from 'tsdown'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { basename, dirname, resolve as resolvePath } from 'node:path'
 
 const PLUGIN_ID = '{{name}}'
+
+/**
+ * The browser half's entry, and whether this repository has one.
+ *
+ * `--host-only` generates a repository **without** `src/client/`, so the second config below has to
+ * be conditional: a fixed entry that is not there fails the whole build with `UNRESOLVED_ENTRY`, and
+ * nothing else in the file suggests the browser half is optional. Measured 2026-11-14:
+ * `scaffold --host-only --verify` could not pass its own checks because of this.
+ */
+const CLIENT_ENTRY = new URL('./src/client/index.tsx', import.meta.url)
+const HAS_CLIENT = existsSync(CLIENT_ENTRY)
 
 /** Read the version once so `src/version.ts` can pick it up at build time. */
 const PACKAGE_VERSION = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
@@ -105,36 +116,44 @@ function cssModulesPlugin(id: string): Plugin {
   } as Plugin
 }
 
-export default [
-  {
-    entry: { index: 'src/index.ts' },
-    outDir: 'lib',
-    format: ['esm'],
-    platform: 'node',
-    target: 'es2024',
-    fixedExtension: false,
-    dts: true,
-    clean: true,
-    define: VERSION_DEFINE,
-    deps: {
-      neverBundle: ['@deepseek-ai/cordis', '@deepseek-ai/schemastery'],
-    },
+/**
+ * The host half, always; the browser half only where its entry exists.
+ *
+ * `src/client/index.tsx` is the file `--host-only` drops, so `HAS_CLIENT` is what keeps this file
+ * honest for both recipes instead of only for the one the scaffold happens to generate most often.
+ */
+const HOST_CONFIG: UserConfig = {
+  entry: { index: 'src/index.ts' },
+  outDir: 'lib',
+  format: ['esm'],
+  platform: 'node',
+  target: 'es2024',
+  fixedExtension: false,
+  dts: true,
+  clean: true,
+  define: VERSION_DEFINE,
+  deps: {
+    neverBundle: ['@deepseek-ai/cordis', '@deepseek-ai/schemastery'],
   },
-  {
-    entry: { client: 'src/client/index.tsx' },
-    outDir: 'lib',
-    format: ['cjs'],
-    platform: 'browser',
-    dts: false,
-    clean: false,
-    define: VERSION_DEFINE,
-    deps: { neverBundle: [...CLIENT_EXTERNALS] },
-    plugins: [cssModulesPlugin(PLUGIN_ID)],
-    outputOptions: {
-      entryFileNames: 'client.js',
-      banner: `window.__ModuleLoader__.load({ id: ${JSON.stringify(PLUGIN_ID)}, factory: (require) => {`,
-      footer: 'return module.exports; } });',
-      intro: 'var module = { exports: {} }; var exports = module.exports;',
-    },
+}
+
+const CLIENT_CONFIG: UserConfig = {
+  entry: { client: 'src/client/index.tsx' },
+  outDir: 'lib',
+  format: ['cjs'],
+  platform: 'browser',
+  dts: false,
+  // The host half already cleaned `lib/`; a second clean would remove it.
+  clean: false,
+  define: VERSION_DEFINE,
+  deps: { neverBundle: [...CLIENT_EXTERNALS] },
+  plugins: [cssModulesPlugin(PLUGIN_ID)],
+  outputOptions: {
+    entryFileNames: 'client.js',
+    banner: `window.__ModuleLoader__.load({ id: ${JSON.stringify(PLUGIN_ID)}, factory: (require) => {`,
+    footer: 'return module.exports; } });',
+    intro: 'var module = { exports: {} }; var exports = module.exports;',
   },
-] satisfies UserConfig[]
+}
+
+export default HAS_CLIENT ? [HOST_CONFIG, CLIENT_CONFIG] : [HOST_CONFIG]
