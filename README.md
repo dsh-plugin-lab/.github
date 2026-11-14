@@ -78,12 +78,14 @@ community files, so the organization profile keeps both languages as two files.
   from here — the plugins carry their own.
 - **No build and no dependencies.** There is no install step anywhere: `scripts/scaffold.mjs` and
   `scripts/check-criteria.mjs` are plain Node with `node:` built-ins only.
-- **Exactly one workflow, and it may only check.** `.github/workflows/check-criteria.yml` verifies
-  that the criteria this repository publishes still hold in the plugin repositories. It installs
-  nothing. This is the one exception to "no CI", and it is narrow on purpose: the moment this
-  repository held a document making promises about other repositories, a promise with no execution
-  body became the failure that document is written against — see
-  [the decision](.agents/notes/2026-10-20-the-org-repo-checks-its-own-criteria.md). The remaining
+- **Two workflows, two roles, and no third.** `.github/workflows/check-criteria.yml` verifies that the
+  criteria this repository publishes still hold in the plugin repositories; it installs nothing and is
+  the only one with a trigger. `.github/workflows/release-publish.yml` is the release chain, called by
+  the plugin repositories as `workflow_call` — it runs only when one of them asks. This is the one
+  exception to "no CI", and it is narrow on purpose: the moment this repository held a document making
+  promises about other repositories, a promise with no execution body became the failure that document
+  is written against — see [the criteria decision](.agents/notes/2026-10-20-the-org-repo-checks-its-own-criteria.md)
+  and [the release-flow decision](.agents/notes/2026-11-14-release-flow-is-extracted.md). The remaining
   checks — links and line endings — are still run by hand; the commands are in [AGENTS.md](AGENTS.md).
 - **No repository-specific content.** What one plugin does, how it builds, and what it
   deliberately will not do stay in that plugin's own repository.

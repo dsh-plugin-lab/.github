@@ -199,8 +199,10 @@ One `icon.svg` at the package root, declared as `"icon": "./icon.svg"`, and ship
 
 ### 1.8 The release flow
 
-The implementation is **each repository's own** (the template ships a reference implementation meeting
-the four below). Those four are the behavioural floor:
+The chain is **shared**: it lives once, in
+[`release-publish.yml`](../.github/workflows/release-publish.yml), and a repository's own `release.yml`
+is a thin caller (§3). The four below are the behavioural floor — a repository that keeps a full copy
+(the named exception) has to meet them itself:
 
 | Floor | Criterion |
 |---|---|
@@ -222,10 +224,11 @@ Four things that are easy to miss, and all four fail **silently**:
   wording belongs to the organization template; copying it verbatim is a sed that fails silently the
   moment it changes.
 
-**Left to each repository, not required to match**: the check chain before publish, the environment name,
-whether a GitHub App token is needed to push to the default branch, the retry policy for creating a
-Release. Their prerequisites (labels, environments, secrets, rulesets, the npm backend) **are not files**,
-so no template can carry them — each repository's `docs/PUBLISHING.md` states its own.
+**Left to each repository, not required to match**: the check chain that runs **inside a repository's own
+copy** (a repository that inserts steps keeps the full flow — see §3), the environment name, whether a
+GitHub App token is needed to push to the default branch, the retry policy for creating a Release. Their
+prerequisites (labels, environments, secrets, rulesets, the npm backend) **are not files**, so no template
+can carry them — each repository's `docs/PUBLISHING.md` states its own.
 
 **A publish can fail for reasons no file can fix.** The one seen in practice: an expired Trusted
 Publisher binding makes the OIDC exchange return 404, and the package silently stays on its previous
@@ -328,11 +331,17 @@ This section states the **obligation**; that document is the **contract**. Neith
 Two things this family keeps per repository on purpose. Both are rules, and both carry a reopening
 condition — without one, the next person cannot tell a decision from an oversight.
 
-- **Workflows are not extracted**: no `workflow_call`. Each repository carries its own copy, held together
-  by **shape**, not by bytes. Byte-identity is the exception and it is enumerated, not implied: the list is
-  `IDENTITY_FILES` in `scripts/scaffold.mjs`, never prose. Reopening condition: six or more plugin
-  repositories, or a workflow that grows real branching logic and per-repository parameters.
-  Reasoning → [decision: workflow copies are not extracted](../.agents/notes/2026-10-12-workflow-copies-not-extracted.md).
+- **The release chain is extracted; the rest is not.** The chain — guards, build, publish, tag,
+  Release, draft retirement — lives once, in
+  [`.github/workflows/release-publish.yml`](../.github/workflows/release-publish.yml), called as
+  `workflow_call`. A repository's own `release.yml` is a thin caller: its triggers, its `environment`
+  name, its permissions. **`ci.yml` is not extracted**: its closing job carries the name `CI Success`,
+  which the ruleset watches per repository, so a called job could not hand that name back. A repository
+  that needs a step **inserted between build and publish** keeps its own full copy and says so in its
+  `AGENTS.md` — that is the named exception, not a drift. Byte-identity is enumerated, never implied:
+  `IDENTITY_FILES` in `scripts/scaffold.mjs`. Reopening condition: a workflow that grows per-repository
+  branching the inputs cannot express — then it goes back to being a copy.
+  Reasoning → [decision: the release flow is extracted](../.agents/notes/2026-11-14-release-flow-is-extracted.md).
 - **The scaffold seeds; it does not synchronise**: `scripts/scaffold.mjs` + `templates/plugin/` lay down a
   new repository's skeleton **once** and never write back into an existing repository. Its `check`
   subcommand is what actually executes the byte-identity criterion; `--verify` generates into a scratch
@@ -341,8 +350,8 @@ condition — without one, the next person cannot tell a decision from an oversi
   not a seed, and it needs its own decision.
   Reasoning → [decision: the scaffold seeds, it does not sync](../.agents/notes/2026-10-12-scaffold-seeds-not-syncs.md).
 
-**No shared package and no extracted copies** follow from the two above: knowledge travels as pointers (the
-host's official sources), assertions are written per repository, accepting two-way sync.
+**No shared package** follows from the two above: knowledge travels as pointers (the host's official
+sources), assertions are written per repository, accepting two-way sync.
 
 ---
 

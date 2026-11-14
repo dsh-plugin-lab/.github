@@ -1,6 +1,7 @@
 # 决策：workflow 不抽成可调用 workflow（2026-10-12）
 
-状态：生效
+状态：被取代
+指针：[决策：发布流抽成组织级可复用 workflow](2026-11-14-release-flow-is-extracted.md)
 
 **类型**：决策。
 

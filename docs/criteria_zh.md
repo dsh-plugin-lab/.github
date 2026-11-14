@@ -38,6 +38,7 @@
 | **四个死代码开关是下限，不是偏好**：`noUnusedLocals`、`noUnusedParameters`、`noImplicitReturns`、`noFallthroughCasesInSwitch` 在每个仓里都读到 `true`。ESLint 管编译器覆盖不到的那一层 | 必须一致 | 各仓一条红线断言这四个都是 `true`；`scripts/check-criteria.mjs` 从本仓再读一遍每个**不 `extends` 别的**根 `tsconfig*.json`（继承了的那份由它继承的那份回答）。**下限就是这四个，仓在上限多开什么是它自己的事**；strict 那一族（`strict` 及同伴）自成一节 |
 | 发布态不变量 | 必须一致 | 各仓 `check:release`（模板带一份，各仓**只追加**不删）；纯宿主插件可对 `files` 一项豁免，**宿主兼容区间不可豁免** |
 | 发布流程**不得**改写版本号 | 必须一致 | `check:release` 里的 `findVersionWrites`，**配反向控制**。改版本号是发布前的独立一步 |
+| **发布链是共享的**：普通仓的 `release.yml` 调用组织仓的 `release-publish.yml`，自己只留触发条件、`environment` 名与 `permissions`。必须在构建与发布之间**插一步**的仓保留整份副本，并在本仓 `AGENTS.md` 说明 —— 那是被点名的例外，不是漂移 | 必须一致 | `scripts/check-criteria.mjs`：它的 `release-*` 几条会**跟着那次调用**读到共享文件，所以薄壳是按「实际跑的东西」判的，不是按空壳判的 |
 | **手动与 tag 两个入口都能触发**，且 tag 触发时基线排除该 tag | 必须一致 | 各仓发布流程里的一条断言 |
 | **发布说明读 Drafter 草稿**、**发完删草稿**，且**读不到时发 warning** | 必须一致 | 各仓发布流程里的一条断言。没有那条 warning，「发布成功但说明来自回落」就是静默失败 |
 | **npm 发布走 OIDC**，全程不传 token | 必须一致 | 各仓发布流程；前置是 npm 后台的 Trusted Publisher（人做，模板带不了） |
@@ -54,6 +55,7 @@
 | 客户端 `inject` 只列真实依赖 | 必须一致 | 用官方自带的校验器，不要写散文 |
 | **本地跑绿不能推出推送会绿**：有 `check` 脚本的仓，它必须覆盖 CI 跑的**每一步** —— 一个命令回答一个问题「这样推安全吗」，那它就不能比它所代表的闸门更窄。反方向不算缺陷：`check` 可以多跑 CI 留给发布流程的那步（`check:release`），因为推送不只需要对着 CI 自证。**没有** `check` 脚本的仓没有做这个承诺，不在本条范围内 | 必须一致 | 每仓一条红线，同时读 `package.json` 与 `.github/workflows/ci.yml`：一个方向断言 CI 的每一步都出现在 `check` 里，另一个方向对「CI 跑了而 `check` 漏了」的步骤报错。参考实现是 `dsh-harness-dispatcher` 的 `B9`，**并带反向控制**：少跑 `lint` 的 `check` 必须被抓住 |
 | 链接怎么写：**同仓 → 相对路径**；**跨仓（同组织或不同组织）→ 绝对 URL**；一律 `[]()`，不用 `<URL>`，不用裸 URL。URL 若只是**值**而非引用，就放进行内代码 | 必须一致 | 各仓 `AGENTS.md`；渲染在组织主页上的文件是例外（那里的链接必须绝对 —— 见那个仓的 `AGENTS.md`） |
+| **组织主页列出每个插件仓**，且不列任何不是插件仓的东西 | 必须一致 | `scripts/check-criteria.mjs`（`profile-lists-every-plugin`），把主页那张表与自动发现的结果比对 —— 比对是纯函数，在 `scripts/lib/profile.mjs`，测试在 `scripts/test/`。它是全仓最后一份手写名单，所以也只有它需要被守住 |
 | **标语是两行，而且会换位**：`<strong>` 是你正在读的这个文件的语言，`<em>` 是另一种；双语的一对是**一份镜像**，不是两份译本（§1.10） | 必须一致 | `scripts/check-criteria.mjs` 的 `front-door-tagline`，读每个插件仓的两份门面 —— 判断抽成纯函数 `scripts/lib/front-door.mjs`，测试在 `scripts/test/`。`dsh-harness-dispatcher` 另在本仓钉了一条（`B37`），让改坏在推送前就红 |
 
 **两类内容，分开治理**：

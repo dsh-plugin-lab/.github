@@ -66,25 +66,9 @@ const RECIPE = {
   typecheckScript: 'tsc -p tsconfig.json && tsc -p tsconfig.client.json',
   typecheckHostOnly: 'tsc -p tsconfig.json',
   // The environment name the npm Trusted Publisher is configured with. It has to match that
-  // one-for-one or the OIDC claims do not match — and a per-repository value, which is why it is
-  // named rather than assumed.
+  // one-for-one or the OIDC claims do not match — and it is a per-repository value, which is why the
+  // thin caller names it rather than inheriting a constant from the shared flow.
   environment: 'release',
-  // The check chain between installing and publishing. Its shape is deliberately not a template's
-  // business: what a repository proves before it ships is its own call. What the flow guarantees
-  // downstream of it does not vary, and that is what release.yml states.
-  prePublishChecks: [
-    '      - name: Install locked dependencies',
-    '        run: pnpm install --frozen-lockfile --config.node-linker=hoisted',
-    '',
-    '      - run: pnpm run typecheck',
-    '',
-    '      # Order is fixed: lib/ is a build artifact, and a test that reads it cannot pass before',
-    '      # it exists.',
-    '      - name: Build (produces lib/)',
-    '        run: pnpm run build',
-    '',
-    '      - run: pnpm run test',
-  ].join('\n'),
 }
 
 /**
@@ -109,8 +93,10 @@ const VERIFY_STEPS = ['check', 'lint', 'format:check']
  *   repositories that already exist have it in Chinese, this template in English. They became
  *   different files the moment the template's prose was translated. Aligning the existing
  *   repositories is its own decision, not something a seeder does behind their backs.
- * - `ci.yml`, `release.yml`, `compat.yml` are byte-identical copies too, but each is either
- *   token-rendered per repository or (release / compat) not generated at all here.
+ * - `ci.yml` and `compat.yml` are byte-identical copies too, but each is either token-rendered per
+ *   repository or not generated at all here. `release.yml` is deliberately **not** an identity file:
+ *   the template ships a thin caller of the shared release flow, while a repository that needs a step
+ *   between build and publish keeps a full copy. The two are different files on purpose.
  *
  * Measured 2026-10-12 over the reference repositories: `.node-version` and
  * `.github/workflows/release-drafter.yml` match across all of them; `.prettierignore` matches
@@ -243,7 +229,6 @@ function buildContext(opts) {
     buildScript: RECIPE.buildScript,
     typecheckScript: hostOnly ? RECIPE.typecheckHostOnly : RECIPE.typecheckScript,
     environment: RECIPE.environment,
-    prePublishChecks: RECIPE.prePublishChecks,
     clientPeerDeps,
     clientDevDeps,
     clientExport,

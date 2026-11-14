@@ -1,0 +1,229 @@
+# The release chain, shared by every plugin repository.
+#
+# What a caller keeps: its triggers, its `environment` name, and any step it must run *between*
+# build and publish (a repository that needs one keeps its own copy instead of calling this file).
+# Everything else — guards, build, publish, tag, Release, draft retirement — lives here once.
+#
+# Called in the caller's context, so `github.event_name` / `github.ref_name` are the caller's event.
+# That is what lets both entry points work with no per-repository logic.
+name: Release (shared)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'The environment named on the npm Trusted Publisher, word for word'
+        type: string
+        default: release
+      force:
+        description: 'Bypass the "no behaviour change, no release" guard'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ inputs.environment }}
+
+    steps:
+      # A dispatch accepts only the default branch. A tag trigger points at a commit and is governed
+      # by the tag/version gate below — without this event test the ref is refs/tags/... and every
+      # tag-triggered release would fail here.
+      - name: Verify this dispatch came from the default branch
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::a release may only be dispatched from main; the current ref is ${{ github.ref }}"
+          exit 1
+
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the guard diffs the previous tag; --generate-notes needs the history
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+
+      # The baseline must exclude the tag being released: on a tag trigger HEAD *is* the tagged
+      # commit, so `describe` would resolve to that tag, `<tag>..HEAD` would be empty, and a normal
+      # release would be judged "nothing to release".
+      - name: Guard against release noise
+        if: inputs.force != true
+        run: |
+          exclude=""
+          if [ "${{ github.event_name }}" = "push" ]; then exclude="--exclude=${{ github.ref_name }}"; fi
+          base=$(git describe --tags --abbrev=0 --match 'v[0-9]*' $exclude 2>/dev/null || true)
+          if [ -z "$base" ]; then
+            echo "no earlier tag: the first release is not subject to the guard."
+            exit 0
+          fi
+          changed=$(git diff --name-only "$base..HEAD")
+          if [ -z "$changed" ]; then
+            echo "::error::no changes at all since $base; there is nothing to release."
+            exit 1
+          fi
+          echo "changes in $base..HEAD:"
+          printf '%s\n' "$changed" | node scripts/release-guard.mjs
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile --config.node-linker=hoisted
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      # Order is fixed: lib/ is a build artifact, and a test that reads it fails before it exists.
+      - name: Build (produces lib/)
+        run: pnpm run build
+
+      - name: Test
+        run: pnpm run test
+
+      - name: Release-state check
+        run: pnpm run check:release
+
+      # The tag trigger's own gate: the tag must be `v` plus the manifest version. Otherwise "the tag
+      # says v0.3.0, what ships is 0.2.0" — and npm versions cannot be overwritten.
+      - name: Verify the pushed tag matches the manifest version
+        if: github.event_name == 'push'
+        run: |
+          want="v$(node -p "require('./package.json').version")"
+          got="${{ github.ref_name }}"
+          if [ "$got" != "$want" ]; then
+            echo "::error::$got was pushed while package.json is $want — the tag and the manifest must agree"
+            exit 1
+          fi
+          echo "$got matches the manifest; continuing."
+
+      - name: Read the version to publish
+        id: version
+        run: |
+          version=$(node -p "require('./package.json').version")
+          dist_tag=$(node -p "const v=require('./package.json').version; const m=/^[0-9]+\.[0-9]+\.[0-9]+-([A-Za-z][0-9A-Za-z-]*)(?:\.[0-9A-Za-z-]+)*$/.exec(v); m ? m[1] : ''")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "dist_tag=$dist_tag" >> "$GITHUB_OUTPUT"
+          echo "releasing $version (dist-tag: ${dist_tag:-default latest})"
+
+      # Idempotency: an already-published version skips publish and completes only the git side, so a
+      # re-run repairs "published but the push failed". A forgotten bump shows up here as "already on
+      # npm" rather than shipping the same code under a second number.
+      - name: Check whether that version is already on npm
+        id: probe
+        run: |
+          name=$(node -p "require('./package.json').name")
+          if npm view "$name@${{ steps.version.outputs.version }}" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "::${{ steps.version.outputs.version }} is already on npm: skipping publish and completing only the git side"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit any remaining manifest changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "the working tree has no changes (version-driven: the bump is in a local commit), skipping the commit"
+          else
+            git add -A
+            git commit -m "chore: commit manifest state for release ${{ steps.version.outputs.version }}"
+          fi
+
+      # OIDC: the CLI fetches a short-lived credential itself, no token at any point. --provenance is
+      # redundant under OIDC and stays as a sentinel — an environment that cannot produce provenance
+      # goes red. A prerelease goes to its own dist-tag and leaves `latest` alone.
+      - name: Publish to npm
+        if: steps.probe.outputs.published == 'false'
+        run: |
+          if [ -n "${{ steps.version.outputs.dist_tag }}" ]; then
+            pnpm publish --provenance --access public --no-git-checks --tag "${{ steps.version.outputs.dist_tag }}"
+          else
+            pnpm publish --provenance --access public --no-git-checks
+          fi
+
+      # The git side of a release, the tag and the Release: **both are produced by the flow**, so no
+      # one has to remember to add them afterwards.
+      #
+      # The `v` prefix is explicit: `npm version`'s output carries it, the manifest does not, and the
+      # guard's `git describe --match 'v[0-9]*'` cannot see a tag without it.
+      - name: Create the tag
+        if: steps.probe.outputs.published == 'false'
+        run: |
+          tag="v${{ steps.version.outputs.version }}"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "$tag already exists, skipping the tag."
+          else
+            git tag "$tag"
+            git push origin "$tag"
+          fi
+
+      # "Was the draft actually read?" is asserted: no draft is normal, an unreadable draft is broken
+      # configuration (tag renamed / action never ran / permissions), and without the distinction
+      # "released, but the body came from the fallback" is a silent failure. The cleanup matches the
+      # action's **name**, not the wording of its notice — that belongs to the template.
+      - name: Pick the release body (draft first, then --generate-notes)
+        id: notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          draft="$(gh release view next --json body --jq '.body' 2>/dev/null || true)"
+          if printf '%s' "$draft" | grep -q 'Release Drafter'; then
+            printf '%s\n' "$draft" | sed '/Release Drafter/d' > /tmp/notes.md
+            if [ -n "$(grep -E '^[-*] ' /tmp/notes.md || true)" ]; then
+              echo "source=draft" >> "$GITHUB_OUTPUT"
+              echo "::notice::the body comes from the Release Drafter draft (next)"
+            else
+              echo "source=generate" >> "$GITHUB_OUTPUT"
+              echo "::notice::the draft was read but has no entries, falling back to --generate-notes"
+            fi
+          else
+            echo "source=generate" >> "$GITHUB_OUTPUT"
+            echo "::warning::cannot read the Release Drafter draft (next) — falling back to --generate-notes."
+            echo "::warning::if the configuration is broken, this warning is the only signal."
+          fi
+
+      - name: Create the GitHub Release
+        if: steps.probe.outputs.published == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v${{ steps.version.outputs.version }}"
+          case "${{ steps.version.outputs.version }}" in
+            *-*) flags="--prerelease" ;;
+            *)   flags="" ;;
+          esac
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "the Release for $tag already exists, skipping."
+          else
+            echo "creating the Release: $tag $flags (body source: ${{ steps.notes.outputs.source }})"
+            if [ "${{ steps.notes.outputs.source }}" = "draft" ]; then
+              gh release create "$tag" --title "$tag" $flags --notes-file /tmp/notes.md
+            else
+              gh release create "$tag" --title "$tag" $flags --generate-notes
+            fi
+          fi
+
+      # The draft has to give way once its body is taken, or the next release reads the previous
+      # batch's body — stale rather than empty, which looks perfectly fine. The condition must match
+      # the Create step, or that batch's notes are lost. Only a draft (tag not starting with `v`) is
+      # deleted; `--cleanup-tag=false` keeps a formal release's tag intact.
+      - name: Retire the drafter's next draft
+        if: steps.probe.outputs.published == 'false' && steps.notes.outputs.source == 'draft'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          draft_tag="$(gh release list --limit 30 --json tagName,isDraft \
+            --jq '[.[] | select(.isDraft) | .tagName] | map(select(startswith("v") | not)) | .[0] // ""')"
+          if [ -n "$draft_tag" ]; then
+            gh release delete "$draft_tag" --yes --cleanup-tag=false
+            echo "deleted the draft $draft_tag (Release Drafter rebuilds it after the next merge)"
+          fi

@@ -145,7 +145,9 @@ ruleset 的 `required_status_checks` 只写 `CI Success` 这一个名字。
 
 ### 1.8 发布流程
 
-发布层的实现**各仓各写**（模板给一份满足下面四条的参考实现）。四条是行为底线：
+发布链**是共享的**：只存在一份，在
+[`release-publish.yml`](../.github/workflows/release-publish.yml)，各仓自己的 `release.yml` 是薄壳（§3）。
+下面四条是行为底线 —— 保留整份副本的仓（被点名的例外）得自己满足它们：
 
 | 底线 | 判据 |
 |---|---|
@@ -164,9 +166,10 @@ ruleset 的 `required_status_checks` 只写 `CI Success` 这一个名字。
 - **清理草稿时匹配 action 自己那一行**，不要抄提示语的全文 —— 那句话归组织仓模板所有，
   照抄一句就是一条静默失效的 sed。
 
-**逐仓自己定、不强制的**：发版前的检查链、environment 名字、要不要 GitHub App token 推默认分支、
-建 Release 的重试策略。这些的前置配置（labels、environments、secrets、ruleset、npm 后台）**都不在文件里**，
-模板替不了，各仓的 `docs/PUBLISHING.md` 写自己那份。
+**逐仓自己定、不强制的**：**保留整份副本时**那份副本里的检查链（要插步骤的仓才有，见 §3）、
+environment 名字、要不要 GitHub App token 推默认分支、建 Release 的重试策略。这些的前置配置
+（labels、environments、secrets、ruleset、npm 后台）**都不在文件里**，模板替不了，各仓的
+`docs/PUBLISHING.md` 写自己那份。
 
 **发布可以因为任何文件都修不了的原因失败。** 实际遇到的那一次：Trusted Publisher 绑定过期，OIDC 换取 token 返回 404，
 包**静默**停在旧版本上。这就是 §2 要求「合并的版本必须真的发到 npm」、以及索引要报漂移的原因 ——
@@ -252,19 +255,21 @@ README 的第一屏：图标、包名、标语、徽章，以及有第二语言�
 有两件事，这一族**故意让每个仓各自持有**。它们都是规则，且都带重开条件 —— 没有重开条件，
 下一个人就分不清这是决策还是疏忽。
 
-- **workflow 不抽**：不做 `workflow_call`。各仓自带一份副本，副本之间靠**形状**一致，不靠字节。
-  逐字节相同是**例外**，而且是被枚举出来的例外，不靠推断：候选清单就是 `scripts/scaffold.mjs`
-  里的 `IDENTITY_FILES`，不是散文。重开条件：插件仓达到 6 个以上，或某个 workflow 开始出现真实的
-  分支逻辑与多仓参数。
-  论证 → [决策：workflow 不抽成可调用 workflow](../.agents/notes/2026-10-12-workflow-copies-not-extracted.md)。
+- **发布链抽出去了，其余不抽**：发布链 —— 守卫、构建、发布、打 tag、建 Release、退草稿 ——
+  只存在一份，在 [`release-publish.yml`](../.github/workflows/release-publish.yml)，以 `workflow_call`
+  被调用。各仓自己的 `release.yml` 是**薄壳**：触发条件、`environment` 名、`permissions`。
+  **`ci.yml` 不抽**：它的收尾 job 叫 `CI Success`，而 ruleset 是逐仓盯这个名字的，被调用的 job
+  给不回这个名字。某仓若必须在构建与发布之间**插一步**，它保留自己的整份副本并在本仓 `AGENTS.md`
+  里说明 —— 那是被点名的例外，不是漂移。逐字节相同是**例外**且被枚举：`scripts/scaffold.mjs`
+  里的 `IDENTITY_FILES`。重开条件：某个 workflow 长出 inputs 表达不了的分支逻辑 —— 那时退回成副本。
+  论证 → [决策：发布流抽成组织级](../.agents/notes/2026-11-14-release-flow-is-extracted.md)。
 - **脚手架只播种，不同步**：`scripts/scaffold.mjs` + `templates/plugin/` 只给**新仓**铺一次骨架，
   之后**永不回写**任何已存在的仓。它的 `check` 子命令真正在执行逐字节相同那条判据；`--verify`
   在临时目录里生成一遍、跑生成仓自己的检查，模板改动以它为准。重开条件：某次模板改动必须抵达
   已存在的仓 —— 那是迁移，不是播种，得单独决策。
   论证 → [决策：脚手架只播种、不同步](../.agents/notes/2026-10-12-scaffold-seeds-not-syncs.md)。
 
-**不建共享包、不抽副本**由上面两条推出：知识类靠指针（宿主官方真源），断言类各仓各写、
-接受双向同步。
+**不建共享包**由上面两条推出：知识类靠指针（宿主官方真源），断言类各仓各写、接受双向同步。
 
 ---
 
