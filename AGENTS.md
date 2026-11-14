@@ -49,13 +49,16 @@
   字段），比对可机检的判据与红线规模。**改过判据就跑一遍**。
 - 本仓**无构建、无依赖安装**：改完跑上面几条，再去 GitHub 上看渲染。
   两个脚本都只用 `node:` 内建模块，不破这条
-- **只有一个 workflow，且只许核对判据**：`.github/workflows/check-criteria.yml`。加第二个要先改
-  [决策记录](.agents/notes/2026-10-20-the-org-repo-checks-its-own-criteria.md)。
+- **本仓只有两个 workflow，两种身份，没有第三种**：`.github/workflows/check-criteria.yml`（核对判据，
+  唯一有触发器的）与 `.github/workflows/release-publish.yml`（被插件仓 `workflow_call` 调用，自己
+  **没有触发器**，也不会自己跑）。加第三个、或给共享文件加触发器，都要先改
+  [决策记录](.agents/notes/2026-11-14-release-flow-is-extracted.md)。
 
 ## 验证快照
 
-- 校验 = 链接校验 + 换行校验**手工跑**；判据落点由**唯一的 workflow 每周自动核**（见上）。
+- 校验 = 链接校验 + 换行校验**手工跑**；判据落点由**核对判据那个 workflow 每周自动核**（见上）。
   两者不重叠：手工那两条查本仓文档自身，workflow 查别的仓是否还符合本仓发布的判据。
+  共享发布流**没有自动核** —— 它只在真实发版时被执行，所以对它的任何改动都要实跑一次。
 - 本仓的判定要看**渲染效果**而不是文件内容：issue 表单要点开 New issue 看下拉项，
   组织主页要看 github.com/dsh-plugin-lab，回退要看 `community/profile` 的返回。
 
@@ -77,13 +80,13 @@ GitHub 上有一类规矩只存在于设置里：ruleset、私密漏洞报告、
 | Discussions | 关 —— 本族不用，issue 按仓分立 | `gh api repos/dsh-plugin-lab/<仓>` 的 `has_discussions` |
 
 **为什么 market 与本仓不加 `CI Success`**：那条检查依赖「`ci.yml` 有一个收尾 job 叫这个名字」。
-本仓唯一的 workflow 没有 `pull_request` 触发器，market 的 `build-market.yml` 带 `paths` 过滤 ——
-硬加这一条，凡是没命中 paths 的 PR 永远等不到那个状态，PR 会被**永久卡死**。插件仓那条规矩
-在这里不成立，是因为前提不成立，不是例外。
+本仓两个 workflow 一个没有 `pull_request` 触发器、一个由别人调用，market 的 `build-market.yml` 带
+`paths` 过滤 —— 硬加这一条，凡是没命中 paths 的 PR 永远等不到那个状态，PR 会被**永久卡死**。
+插件仓那条规矩在这里不成立，是因为前提不成立，不是例外。
 
-**发布 environment 是逐仓的**（判据明写它不由模板携带）：名字按各仓 `release.yml` 写的那个来，
-对不上则 OIDC 的 claims 与 Trusted Publisher 不匹配、发布 404。dispatcher 的 `release` 是
-2026-11-13 补的，它的 `release.yml` 那天起才具备 OIDC 前提。
+**发布 environment 是逐仓的**：它是共享发布流的**输入**（`with: environment:`），不是模板携带的常量。
+名字必须与 npm 后台 Trusted Publisher 上那个词逐字相同，对不上则 OIDC 的 claims 不匹配、发布 404，
+而 404 本身不会说明原因。dispatcher 的 `release` 是 2026-11-13 补的。
 
 ## 待办
 
@@ -92,7 +95,7 @@ GitHub 上有一类规矩只存在于设置里：ruleset、私密漏洞报告、
   那一节是**当前状态**，不是承诺 —— 某一项被关掉，本仓不会有任何东西变红。
 - [x] ~~四个编译器开关没有执行体~~ —— 2026-10-20 处理：判据升为 **Must agree** 并收窄成「四个死代码开关
   是下限」（`noUnusedLocals` / `noUnusedParameters` / `noImplicitReturns` / `noFallthroughCasesInSwitch`；
-  `strict` 那一族另成一节）。四仓各有一条红线断言，`dsh-workbuddy-bridge` 补齐了缺的
+  `strict` 那一族另成一节）。每个仓各有一条红线断言，`dsh-workbuddy-bridge` 补齐了缺的
   `noImplicitReturns`（`tsconfig.json` 与 `tsconfig.client.json` 两份独立清单都加）。本仓另加一条机检
   `dead-code-switches`，判据那一行承诺的「本仓再读一遍」由它兑现。论证见
   [.agents/notes/2026-10-20-dead-code-switches-are-a-floor.md](.agents/notes/2026-10-20-dead-code-switches-are-a-floor.md)。

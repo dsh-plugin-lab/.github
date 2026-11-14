@@ -19,8 +19,8 @@ test('an English README.md with README_zh.md is a mirror and passes', () => {
 })
 
 test('a Chinese README.md with README_en.md is a mirror and passes', () => {
-  // Two of the five sibling repositories look like this. A checker that assumed README.md is always
-  // English would report both as broken, which is why the language comes from the file name.
+  // Some sibling repositories look like this. A checker that assumed README.md is always English
+  // would report them as broken, which is why the language comes from the file name.
   assert.deepEqual(judgeFrontDoor({ readme: ZH, other: { name: 'README_en.md', text: EN } }), [])
 })
 

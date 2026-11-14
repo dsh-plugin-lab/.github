@@ -43,11 +43,13 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { discoverPlugins } from './lib/discover.mjs'
 import { judgeFrontDoor } from './lib/front-door.mjs'
+import { judgeProfile, tableRows } from './lib/profile.mjs'
 import { judgeTsconfigFloor } from './lib/tsconfig-floor.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const BASELINE = join(ROOT, 'redlines-baseline.json')
 const KNOWN_FINDINGS = join(ROOT, 'known-findings.json')
+const PROFILE = join(ROOT, 'profile', 'README.md')
 
 const argv = process.argv.slice(2)
 const flag = (name) => argv.includes(name)
@@ -105,6 +107,28 @@ function withoutComments(source) {
  *  all is a leftover from a lockfile generated against a mirror. */
 function urlsIn(text) {
   return [...new Set(text.match(/https?:\/\/[^\s"',)]+/gu) ?? [])]
+}
+
+/**
+ * The shared release flow's source, or `undefined` if this checkout does not have it.
+ *
+ * Read locally on purpose: a plugin repository that calls the shared flow keeps almost nothing in its
+ * own `release.yml`, so a criterion about what the release *does* has to follow the call — and the
+ * file it lands in lives in this repository, not in the one being checked.
+ */
+const SHARED_RELEASE = join(ROOT, '.github', 'workflows', 'release-publish.yml')
+
+async function sharedReleaseFlow() {
+  try {
+    return await readFile(SHARED_RELEASE, 'utf8')
+  } catch {
+    return undefined
+  }
+}
+
+/** The shared flow a repository's `release.yml` delegates to, if it delegates at all. */
+function delegatedTo(source) {
+  return /uses:\s*dsh-plugin-lab\/\.github\/\.github\/workflows\/release-publish\.yml@/u.test(source)
 }
 
 
@@ -319,7 +343,11 @@ const CHECKS = [
     async run(repository) {
       const release = await repository.read('.github/workflows/release.yml')
       if (release === undefined) return ['.github/workflows/release.yml is missing']
-      const body = withoutComments(release)
+      // A thin caller carries none of the steps, so judging it alone would make this row look green
+      // in every repository by accident. The criterion follows the call to the file that runs.
+      const source = delegatedTo(release) ? await sharedReleaseFlow() : release
+      if (source === undefined) return ['release.yml delegates to the shared flow, which is missing from this checkout']
+      const body = withoutComments(source)
       const problems = []
       for (const pattern of [/npm\s+version/u, /pnpm\s+version/u, /npm\s+pkg\s+set\s+version/u]) {
         if (pattern.test(body)) problems.push(`release.yml mutates the version (${pattern})`)
@@ -441,7 +469,9 @@ async function checkRedlines(repository, baseline) {
 
   const counts = countTests(source)
   const expected = baseline[name]
-  if (expected === undefined) return { problems: [], file, counts, unrecorded: true }
+  // A repository with no entry here used to pass in silence, so creating a repository quietly took
+  // its redlines out of the sweep. Missing is now a finding, and the fix is the command named in it.
+  if (expected === undefined) return { problems: ['no baseline entry: node scripts/check-criteria.mjs --update-baseline'], file, counts }
 
   const problems = []
   for (const kind of ['describe', 'it']) {
@@ -547,6 +577,21 @@ async function main() {
     }
   }
 
+  // Organization-level checks: these judge the repositories against each other, not one against a
+  // rule, so they cannot live in the per-repository loop above.
+  const orgProblems = judgeProfile({
+    rows: tableRows(await readFile(PROFILE, 'utf8').catch(() => '')),
+    plugins: plugins.map((plugin) => plugin.name),
+  })
+  if (orgProblems.length > 0) {
+    findings.push({
+      repository: ORG,
+      check: 'profile-lists-every-plugin',
+      criterion: 'The organization profile page lists every plugin repository, and nothing stale',
+      problems: orgProblems,
+    })
+  }
+
   if (flag('--update-baseline')) {
     const next = {}
     for (const [name, counts] of Object.entries(redlineCounts)) {
@@ -612,7 +657,9 @@ async function main() {
   }
 
   if (fresh.length === 0) {
-    line(`${CHECKS.length + 1} checks, 0 new findings`)
+    // Per-repository checks plus the two that are judged once for the organization: the redline
+    // baseline and the profile page.
+    line(`${CHECKS.length + 2} checks, 0 new findings`)
     return
   }
 

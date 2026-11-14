@@ -8,10 +8,10 @@
  * The rule and its intent are in docs/plugin-conventions.md §1.10; this file only judges.
  *
  * **Which language a front door is in comes from its file name, never from a default.**
- * Measured 2026-11-14 across the family: five repositories split two-and-three — `README.md` is the
- * Chinese half in two of them and the English half in the other three, and the second file is
- * `README_en.md` or `README_zh.md` accordingly. A checker that assumed "README.md is English" would
- * be wrong in two repositories and, worse, would report them as compliant after they drifted.
+ * `README.md` is the Chinese half in some repositories and the English half in others, with
+ * `README_en.md` or `README_zh.md` as the second file accordingly. A checker that assumed "README.md
+ * is English" would be wrong in those repositories and, worse, would report them as compliant after
+ * they drifted. Never state how many repositories are in either group: the split is not a constant.
  */
 
 /** A CJK ideograph. The taglines in this family are English and Chinese, so this is the whole test. */

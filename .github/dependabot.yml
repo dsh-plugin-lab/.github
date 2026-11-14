@@ -1,5 +1,4 @@
-# Actions version drift comes to us: dependabot opens a bump PR, and the only workflow this
-# repository has runs on it first.
+# Actions version drift comes to us: dependabot opens a bump PR, and the workflows here run on it.
 #
 # The github-actions ecosystem only. This repository has no npm dependencies at all — the scripts
 # use `node:` built-ins by design — so any npm update it proposed would be noise.

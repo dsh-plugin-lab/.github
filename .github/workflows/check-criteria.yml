@@ -27,6 +27,8 @@ on:
       - 'scripts/lib/discover.mjs'
       - 'redlines-baseline.json'
       - '.github/workflows/check-criteria.yml'
+      # The shared release flow: a criterion reads it to judge what a thin caller's release does.
+      - '.github/workflows/release-publish.yml'
 
 permissions:
   contents: read
