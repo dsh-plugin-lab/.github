@@ -27,8 +27,10 @@
   OIDC claims 转储、推送发布提交），它不调用共享文件，并在本仓 `AGENTS.md` 说明。这条写进公约，
   是为了让「例外」和「漂移」分得开。
 - **先在一仓试通，再铺开**：`dsh-harness-dispatcher` 的 `release.yml` 与模板结构差异曾是 0，
-  是最干净的试点。**状态（2026-11-14）：共享文件与模板薄壳已落地，真实仓尚未迁移** ——
-  下一次发版必须在某个仓实跑一遍，绿了才算这条决策成立。
+  是最干净的试点。**状态（2026-11-14）：试点已通过** —— 它发出 `0.1.1`，`_npmUser` 是
+  `GitHub Actions` 且带 `trustedPublisher`，产物带 SLSA `provenance/v1`，tag、Release 与草稿回收
+  全部正常。实测同时回答了「npm 认调用方还是被执行方」：**认调用方**，所以各包 TP 一个都不用改 ——
+  见[依据：npm 的 OIDC 校验的是调用方 workflow](2026-11-14-npm-oidc-validates-the-caller.md)。
 
 ## 替代方案（强制）
 
