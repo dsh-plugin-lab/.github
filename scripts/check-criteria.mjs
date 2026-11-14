@@ -44,6 +44,7 @@ import { fileURLToPath } from 'node:url'
 import { discoverPlugins } from './lib/discover.mjs'
 import { judgeFrontDoor } from './lib/front-door.mjs'
 import { judgeProfile, tableRows } from './lib/profile.mjs'
+import { judgeCaller, judgeSharedFlow } from './lib/release-flow.mjs'
 import { judgeTsconfigFloor } from './lib/tsconfig-floor.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -356,6 +357,20 @@ const CHECKS = [
     },
   },
   {
+    id: 'release-caller-intact',
+    criterion: 'A repository either calls the shared release chain with the two literals npm validates, or keeps a full copy',
+    group: 'workflows',
+    async run(repository) {
+      const release = await repository.read('.github/workflows/release.yml')
+      if (release === undefined) return ['.github/workflows/release.yml is missing']
+      // A repository that keeps its own full copy is not a defect: it is the named exception for one
+      // that must insert a step. What is a defect is calling the shared flow and dropping the
+      // filename or the environment name, because the registry reports both as the same 404.
+      if (!delegatedTo(release)) return []
+      return judgeCaller(release, { environment: 'release' })
+    },
+  },
+  {
     id: 'release-two-entry-points',
     criterion: 'Both entry points, manual and tag, can trigger the release',
     group: 'workflows',
@@ -577,6 +592,29 @@ async function main() {
     }
   }
 
+  // The shared release chain is judged **once**, against the file that actually runs. These are the
+  // assertions each plugin repository used to carry against its own `release.yml`; a thin caller
+  // contains none of the steps, so left there they would be green because there was nothing to read.
+  const shared = await sharedReleaseFlow()
+  if (shared === undefined) {
+    findings.push({
+      repository: ORG,
+      check: 'shared-release-flow',
+      criterion: 'The shared release chain still does what the family relies on',
+      problems: ['.github/workflows/release-publish.yml is missing'],
+    })
+  } else {
+    const problems = judgeSharedFlow(shared)
+    if (problems.length > 0) {
+      findings.push({
+        repository: ORG,
+        check: 'shared-release-flow',
+        criterion: 'The shared release chain still does what the family relies on',
+        problems,
+      })
+    }
+  }
+
   // Organization-level checks: these judge the repositories against each other, not one against a
   // rule, so they cannot live in the per-repository loop above.
   const orgProblems = judgeProfile({
@@ -593,6 +631,18 @@ async function main() {
   }
 
   if (flag('--update-baseline')) {
+    // A repository whose redline file could not be **read** is not the same as one that has none, and
+    // the difference decides whether this write is honest: skipping it inside a "baseline updated"
+    // message would quietly lower that repository's floor to nothing, and the next run would only
+    // notice because a missing entry is now a finding. Refusing is the smaller surprise.
+    const unreadableNow = Object.entries(redlineCounts)
+      .filter(([, counts]) => !counts.file)
+      .map(([name]) => name)
+    if (unreadableNow.length > 0) {
+      line(`refusing to write the baseline: no redline file could be read for ${unreadableNow.join(', ')}`)
+      line('re-run once the fetch succeeds — a skipped repository here becomes an entry with no check behind it')
+      process.exit(2)
+    }
     const next = {}
     for (const [name, counts] of Object.entries(redlineCounts)) {
       if (counts.file) next[name] = counts

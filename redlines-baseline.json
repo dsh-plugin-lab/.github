@@ -1,13 +1,13 @@
 {
   "dsh-ds-balance": {
     "file": "test/redlines.test.ts",
-    "describe": 18,
-    "it": 71
+    "describe": 21,
+    "it": 76
   },
   "dsh-dsml-rescue": {
     "file": "test/redlines.test.ts",
-    "describe": 9,
-    "it": 23
+    "describe": 10,
+    "it": 28
   },
   "dsh-harness-dispatcher": {
     "file": "test/redlines.test.ts",
@@ -16,13 +16,13 @@
   },
   "dsh-plugin-debugging": {
     "file": "test/redlines.test.ts",
-    "describe": 36,
-    "it": 124
+    "describe": 39,
+    "it": 136
   },
   "dsh-workbuddy-bridge": {
     "file": "tests/redlines.spec.ts",
-    "describe": 13,
-    "it": 45
+    "describe": 16,
+    "it": 55
   },
   "dsh-zhihu-search": {
     "file": "test/redlines.test.ts",
