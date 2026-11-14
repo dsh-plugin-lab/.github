@@ -13,6 +13,7 @@
 | <a href="https://github.com/dsh-plugin-lab/dsh-workbuddy-bridge"><img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-workbuddy-bridge/main/icon.svg" width="80" height="80" alt="dsh-workbuddy-bridge"></a> | [dsh-workbuddy-bridge](https://github.com/dsh-plugin-lab/dsh-workbuddy-bridge) | 把 WorkBuddy 桌面 App 的模型接入 DSH |
 | <a href="https://github.com/dsh-plugin-lab/dsh-plugin-debugging"><img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-plugin-debugging/main/icon.svg" width="80" height="80" alt="dsh-plugin-debugging"></a> | [dsh-plugin-debugging](https://github.com/dsh-plugin-lab/dsh-plugin-debugging) | DSH 插件运行时诊断：区分实时生效、重启和热重载。 |
 | <a href="https://github.com/dsh-plugin-lab/dsh-dsml-rescue"><img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-dsml-rescue/main/icon.svg" width="80" height="80" alt="dsh-dsml-rescue"></a> | [dsh-dsml-rescue](https://github.com/dsh-plugin-lab/dsh-dsml-rescue) | 工具调用以推理文本的形式漏出、导致一轮对话空转结束时，自动续上。 |
+| <a href="https://github.com/dsh-plugin-lab/dsh-harness-dispatcher"><img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-harness-dispatcher/main/icon.svg" width="80" height="80" alt="dsh-harness-dispatcher"></a> | [dsh-harness-dispatcher](https://github.com/dsh-plugin-lab/dsh-harness-dispatcher) | 用固定任务跑受控的组装变体，并记录确定性轨迹。 |
 
 ## 安装
 

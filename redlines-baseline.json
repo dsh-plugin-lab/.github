@@ -9,6 +9,11 @@
     "describe": 9,
     "it": 23
   },
+  "dsh-harness-dispatcher": {
+    "file": "test/redlines.test.ts",
+    "describe": 37,
+    "it": 130
+  },
   "dsh-plugin-debugging": {
     "file": "test/redlines.test.ts",
     "describe": 36,

@@ -13,6 +13,7 @@ Plugins for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
 | <a href="https://github.com/dsh-plugin-lab/dsh-workbuddy-bridge"><img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-workbuddy-bridge/main/icon.svg" width="80" height="80" alt="dsh-workbuddy-bridge"></a> | [dsh-workbuddy-bridge](https://github.com/dsh-plugin-lab/dsh-workbuddy-bridge) | Bridge WorkBuddy desktop app models into DSH |
 | <a href="https://github.com/dsh-plugin-lab/dsh-plugin-debugging"><img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-plugin-debugging/main/icon.svg" width="80" height="80" alt="dsh-plugin-debugging"></a> | [dsh-plugin-debugging](https://github.com/dsh-plugin-lab/dsh-plugin-debugging) | Runtime diagnostics for DSH plugins: live, restart, or hot reload. |
 | <a href="https://github.com/dsh-plugin-lab/dsh-dsml-rescue"><img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-dsml-rescue/main/icon.svg" width="80" height="80" alt="dsh-dsml-rescue"></a> | [dsh-dsml-rescue](https://github.com/dsh-plugin-lab/dsh-dsml-rescue) | Continue a turn that ended empty because the tool call leaked out as reasoning text |
+| <a href="https://github.com/dsh-plugin-lab/dsh-harness-dispatcher"><img src="https://raw.githubusercontent.com/dsh-plugin-lab/dsh-harness-dispatcher/main/icon.svg" width="80" height="80" alt="dsh-harness-dispatcher"></a> | [dsh-harness-dispatcher](https://github.com/dsh-plugin-lab/dsh-harness-dispatcher) | Run a fixed task against controlled harness variants and record deterministic traces |
 
 ## Installation
 
