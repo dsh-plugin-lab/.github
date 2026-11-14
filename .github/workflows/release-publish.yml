@@ -212,7 +212,29 @@ jobs:
             fi
           fi
 
-      # The draft has to give way once its body is taken, or the next release reads the previous
+      # When the OIDC exchange fails, npm answers 404 and names no cause: the registry will not say
+      # **which** field of the Trusted Publisher disagreed with the token. Printing the claims the
+      # registry sees is the only way to tell "wrong environment" from "wrong repository" from
+      # "the filename it validates is not the one you configured" — three different fixes.
+      # The token itself is never printed, only the decoded claims.
+      - name: Dump the OIDC claims npm validates
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import base64, json, os, urllib.request
+          req = urllib.request.Request(
+              os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"] + "&audience=npm:registry.npmjs.org",
+              headers={"Authorization": "bearer " + os.environ["ACTIONS_ID_TOKEN_REQUEST_TOKEN"]},
+          )
+          token = json.load(urllib.request.urlopen(req))["value"]
+          payload = token.split(".")[1]
+          payload += "=" * (-len(payload) % 4)
+          claims = json.loads(base64.urlsafe_b64decode(payload))
+          keys = ("aud", "sub", "repository", "repository_owner", "job_workflow_ref", "workflow_ref", "environment", "ref", "event_name")
+          print(json.dumps({k: claims.get(k) for k in keys}, indent=2, ensure_ascii=False))
+          PY
+
+      # Once the body is taken the draft has to give way, or the next release reads the previous
       # batch's body — stale rather than empty, which looks perfectly fine. The condition must match
       # the Create step, or that batch's notes are lost. Only a draft (tag not starting with `v`) is
       # deleted; `--cleanup-tag=false` keeps a formal release's tag intact.
